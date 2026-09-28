@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useApp } from '@renderer/context/AppContext'
 import { HeroSearchBox, SectionHead } from '@renderer/components/ui'
-import { Placeholder } from '@renderer/components/Placeholder'
-import { IMG } from '@renderer/data/ember'
 
 interface CloudSong {
   id: number
@@ -21,6 +19,20 @@ interface MenuState {
 
 /** 每页条数：避免结果撑大窗口，采用分页 */
 const PAGE_SIZE = 10
+
+/** 搜索历史（本地持久化）：最多保留条数 */
+const HISTORY_KEY = 'lwave.searchHistory'
+const HISTORY_MAX = 20
+const loadHistory = (): string[] => {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY)
+    if (!raw) return []
+    const arr = JSON.parse(raw)
+    return Array.isArray(arr) ? arr.filter((x) => typeof x === 'string').slice(0, HISTORY_MAX) : []
+  } catch {
+    return []
+  }
+}
 
 /** 模块级搜索结果缓存：切页再返回时保持上次结果，不重新请求 */
 const searchCache: Record<string, { songs: CloudSong[]; total: number }> = {}
@@ -47,6 +59,7 @@ function mapSong(it: any): CloudSong {
 export function SearchPage(): JSX.Element {
   const { searchQuery, navigate, play, toast, addToQueue, toggleLikeSong, setLyrics, addLocalSong, likedSongs, currentSong, isPlaying, togglePlay } = useApp()
   const [hotWords, setHotWords] = useState<string[]>([])
+  const [history, setHistory] = useState<string[]>(loadHistory)
   const [cloudSongs, setCloudSongs] = useState<CloudSong[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(0)
@@ -65,6 +78,17 @@ export function SearchPage(): JSX.Element {
       })
       .catch(() => {})
   }, [])
+
+  // 搜索历史：任一非空关键词命中时记录（最新在前、去重、截断上限），可点标签关闭删除
+  useEffect(() => {
+    const q = searchQuery.trim()
+    if (!q) return
+    setHistory((prev) => {
+      const next = [q, ...prev.filter((x) => x !== q)].slice(0, HISTORY_MAX)
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(next))
+      return next
+    })
+  }, [searchQuery])
 
   // 云搜索（分页）；命中模块级缓存则直接复用，返回页面不重新请求
   useEffect(() => {
@@ -115,12 +139,21 @@ export function SearchPage(): JSX.Element {
     return () => document.removeEventListener('click', close)
   }, [])
 
-  // 播放云歌（取播放链接）
+  // 播放云歌（先取官方播放链接，未登录/无版权时回退到音源解析）
   const handlePlay = async (s: CloudSong) => {
     try {
       setActiveId(s.id)
       const res = (await window.api.netease.songUrl(s.id)) as { data?: { url?: string }[] }
-      const url = res?.data?.[0]?.url
+      let url = res?.data?.[0]?.url
+      let viaParse = false
+      if (!url) {
+        // 未登录时 /song/url/v1 固定返回 url=null，换第三方音源按「歌名+歌手」取直链
+        const parsed = (await window.api.netease.parseUrl(s.name, s.artist)) as { url?: string; source?: string } | null
+        if (parsed?.url) {
+          url = parsed.url
+          viaParse = true
+        }
+      }
       if (!url) {
         setActiveId(0)
         toast('未获取到播放链接（可能需登录 VIP）')
@@ -128,6 +161,7 @@ export function SearchPage(): JSX.Element {
       }
       // 用原始播放链接（CSP media-src 已放行 http:）；下载走的也是该链接，二者一致
       play(s.name, url, s.artist, s.album, s.pic)
+      toast(viaParse ? `音源解析播放 · ${s.name}` : `正在播放 · ${s.name}`)
       // 播放云歌时联网取歌词，供首页歌词区展示
       window.api.netease
         .lyric(s.id)
@@ -164,6 +198,14 @@ export function SearchPage(): JSX.Element {
     navigate('search', word)
   }
 
+  const removeHistory = (word: string) => {
+    setHistory((prev) => {
+      const next = prev.filter((x) => x !== word)
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(next))
+      return next
+    })
+  }
+
   const isLiked = (s: CloudSong) => likedSongs.some((l) => l.key === 'n' + s.id)
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
@@ -191,29 +233,38 @@ export function SearchPage(): JSX.Element {
 
   return (
     <main className="main">
-      <div className="search-hero" style={{ minHeight: 330, position: 'relative', overflow: 'hidden' }}>
-        <Placeholder ph="hero" img={IMG.hero} style={{ position: 'absolute', inset: 0 }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg,rgba(30,30,27,.18),transparent 65%)' }} />
+      <div className="search-hero" style={{ minHeight: 330, position: 'relative' }}>
         <div className="hero-content" style={{ paddingTop: 31 }}>
           <HeroSearchBox defaultValue={searchQuery} />
-          <div className="hero-main" style={{ marginTop: 'auto', paddingBottom: 5 }}>
+          <div className="hero-main" style={{ marginTop: 36 }}>
             <div className="hero-kicker">SEARCH</div>
             <h1 className="hero-title" style={{ fontSize: 64 }}>Search</h1>
-            <div className="hero-artist" style={{ fontSize: 17 }}>在声音中，找到你想要的风景。</div>
+            <div className="hot-tags" style={{ marginTop: 26, maxWidth: 700 }}>
+              {hotWords.map((w, i) => (
+                <button key={w} className="hot-tag" onClick={() => handleHot(w)}>
+                  <b>{String(i + 1).padStart(2, '0')}</b>
+                  <span>{w}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
       <div className="container">
         <div className="section" style={{ paddingTop: 25 }}>
-          <SectionHead title="热门搜索" />
-          <div className="hot-tags">
-            {hotWords.map((w, i) => (
-              <button key={w} className="hot-tag" onClick={() => handleHot(w)}>
-                <b>{String(i + 1).padStart(2, '0')}</b>
-                <span>{w}</span>
-              </button>
-            ))}
-          </div>
+          <SectionHead title="搜索历史" />
+          {history.length === 0 ? (
+            <div className="result-empty">暂无搜索历史</div>
+          ) : (
+            <div className="history-tags">
+              {history.map((w) => (
+                <button key={w} className="history-tag">
+                  <span className="history-tag__word" onClick={() => handleHot(w)}>{w}</span>
+                  <i className="history-tag__close" title="删除该记录" onClick={(e) => { e.stopPropagation(); removeHistory(w) }}>×</i>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <div className="section">
           <SectionHead title={searchQuery.trim() ? `搜索结果 · ${searchQuery}` : '搜索结果'} />

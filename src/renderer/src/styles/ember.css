@@ -209,6 +209,15 @@ img{max-width:100%}
 .hot-tag{display:flex;align-items:center;gap:8px;background:none;border:1px solid var(--line);border-radius:20px;padding:7px 14px;cursor:pointer;font:13px var(--serif);color:inherit;transition:.15s}
 .hot-tag b{font:11px var(--serif);color:var(--accent);opacity:.8}
 .hot-tag:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-1px)}
+/* 搜索历史可关闭标签 */
+.history-tags{display:flex;flex-wrap:wrap;gap:10px}
+.history-tag{display:flex;align-items:center;gap:4px;background:none;border:1px solid var(--line);border-radius:20px;padding:5px 10px 5px 14px;cursor:default;font:13px var(--serif);color:inherit;transition:border-color .15s,color .15s}
+.history-tag__word{cursor:pointer;line-height:1}
+.history-tag__close{font-style:normal;color:var(--muted);cursor:pointer;line-height:1;padding:2px 2px 2px 4px;font-size:15px;transition:color .15s}
+.history-tag:hover{border-color:var(--accent)}
+.history-tag__word:hover{color:var(--accent)}
+.history-tag__close:hover{color:var(--accent)}
+
 /* 搜索结果行 */
 .search-results .result-row{display:grid;grid-template-columns:36px minmax(0,1.6fr) 1.1fr 1.2fr 58px 118px;align-items:center;height:66px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .15s}
 .search-results .result-row:hover{background:rgba(184,92,53,.07)}
