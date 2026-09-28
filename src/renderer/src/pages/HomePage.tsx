@@ -38,7 +38,7 @@ function pseudoPeaks(key: string, n = 120): number[] {
 }
 
 export function HomePage(): JSX.Element {
-  const { toast, likedSongs, toggleLike, currentSong, currentArtist, currentPath, isPlaying, togglePlay, seek, currentTimeLabel, durationLabel, currentTime, duration, volume, setVolume, lyricsBySong, attachLyrics, localSongs, playQueue } = useApp()
+  const { toast, likedSongs, toggleLike, currentSong, currentArtist, currentPath, isPlaying, togglePlay, seek, currentTimeLabel, durationLabel, currentTime, duration, volume, setVolume, lyricsBySong, attachLyrics, localSongs, playQueue, spectrumRef } = useApp()
   // 当前歌曲是否已收藏
   const isFav = likedSongs.some((l) => l.name === currentSong)
   // 当前歌曲的封面与年份（内置曲目跟随歌曲数据；本地歌曲读取文件元数据与内嵌封面）
@@ -132,6 +132,36 @@ export function HomePage(): JSX.Element {
     d += ' L1000 50'
     return d
   }, [basePeaks])
+
+  // 实时频谱驱动波形：本地歌曲真实播放时每帧更新 SVG path（否则保持伪波形）
+  const waveLineRef = useRef<SVGPathElement>(null)
+  const waveGlowRef = useRef<SVGPathElement>(null)
+  useEffect(() => {
+    const line = waveLineRef.current
+    const glow = waveGlowRef.current
+    if (!line || !glow) return
+    if (!isPlaying || !currentPath) {
+      line.setAttribute('d', wavePath)
+      glow.setAttribute('d', wavePath)
+      return
+    }
+    let raf = 0
+    const sp = spectrumRef.current
+    const tick = () => {
+      raf = requestAnimationFrame(tick)
+      let d = 'M0 50'
+      for (let i = 0; i < sp.length; i++) {
+        const x = (i / (sp.length - 1)) * 1000
+        const y = Math.max(6, Math.min(94, 50 - (sp[i] - 0.5) * 38))
+        d +=  L 
+      }
+      d += ' L1000 50'
+      line.setAttribute('d', d)
+      glow.setAttribute('d', d)
+    }
+    tick()
+    return () => cancelAnimationFrame(raf)
+  }, [isPlaying, currentPath, wavePath, spectrumRef])
 
   // 进度条：ember-progress 结构，点击 / 按住拖动跳转播放进度
   const progressRef = useRef<HTMLDivElement>(null)
@@ -240,8 +270,8 @@ export function HomePage(): JSX.Element {
                   <div className="ember-progress__track" />
                   <div className="ember-progress__remaining" />
                   <svg className="ember-progress__wave" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">
-                    <path className="ember-progress__wave-glow" d={wavePath} />
-                    <path className="ember-progress__wave-line" d={wavePath} />
+                    <path ref={waveGlowRef} className="ember-progress__wave-glow" d={wavePath} />
+                    <path ref={waveLineRef} className="ember-progress__wave-line" d={wavePath} />
                   </svg>
                   <div className="ember-progress__played" />
                   <button className="ember-progress__thumb" aria-label="拖动播放位置" />

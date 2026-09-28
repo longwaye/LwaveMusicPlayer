@@ -104,6 +104,8 @@ interface AppContextValue {
   setVolume: (v: number) => void
   /** 歌词库：按歌曲名存储（持久化） */
   lyricsBySong: Record<string, string>
+  /** 实时频谱：本地歌曲播放时 AnalyserNode 输出的 0–1 波形高度（48 点低频映射） */
+  spectrumRef: React.MutableRefObject<Float32Array>
   /** 为当前歌曲上传本地歌词（.lrc / .txt） */
   attachLyrics: () => Promise<void>
 }
@@ -162,6 +164,39 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
     audioRef.current.volume = volumeState
   }
   const toastTimer = useRef<number | undefined>(undefined)
+
+  // 实时频谱：AnalyserNode 每帧把归一化频率数据写入 spectrumRef（低频→波形高度）
+  const spectrumRef = useRef<Float32Array>(new Float32Array(48))
+  useEffect(() => {
+    const a = audioRef.current
+    if (!a) return
+    let raf = 0
+    let analyser: AnalyserNode | null = null
+    try {
+      const actx = new AudioContext()
+      const src = actx.createMediaElementSource(a)
+      analyser = actx.createAnalyser()
+      analyser.fftSize = 256
+      analyser.smoothingTimeConstant = 0.72
+      src.connect(analyser)
+      analyser.connect(actx.destination)
+    } catch {
+      return
+    }
+    const N = spectrumRef.current.length
+    const buf = new Uint8Array(analyser.frequencyBinCount)
+    const tick = () => {
+      raf = requestAnimationFrame(tick)
+      analyser!.getByteFrequencyData(buf)
+      const arr = spectrumRef.current
+      for (let i = 0; i < N; i++) {
+        const bin = Math.floor((i / N) * analyser!.frequencyBinCount * 0.34)
+        arr[i] = Math.max(0, Math.min(1, buf[bin] / 255))
+      }
+    }
+    tick()
+    return () => cancelAnimationFrame(raf)
+  }, [])
 
   // 持久化本地歌曲库 / 歌词库 / 收藏
   useEffect(() => {
@@ -357,6 +392,7 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
       localSongs,
       playQueue,
       importLocalFiles,
+      spectrumRef,
       isPlaying,
       currentTime,
       duration,
