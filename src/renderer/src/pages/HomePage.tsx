@@ -49,21 +49,26 @@ export function HomePage(): JSX.Element {
     }
   }, [activeIdx, timed])
 
-  // 手动滚动歌词后，约 4 秒无操作则自动回到高亮行居中
+  // 手动滚动或窗口缩放后，约 3 秒无操作则自动回到高亮行居中
   const manualScrollRef = useRef(0)
   const lastAutoScrollRef = useRef(0)
   useEffect(() => {
     if (!timed || activeIdx < 0) return
-    const t = window.setInterval(() => {
+    const center = () => {
       const now = Date.now()
-      if (now - manualScrollRef.current > 4000 && now - lastAutoScrollRef.current > 2500) {
+      if (now - manualScrollRef.current > 3000 && now - lastAutoScrollRef.current > 2500) {
         lastAutoScrollRef.current = now
         const el = activeLineRef.current
         const box = lyricsListRef.current
         if (el && box) box.scrollTo({ top: Math.max(0, el.offsetTop - box.clientHeight / 2 + el.clientHeight / 2), behavior: 'smooth' })
       }
-    }, 1200)
-    return () => window.clearInterval(t)
+    }
+    const t = window.setInterval(center, 1200)
+    window.addEventListener('resize', center)
+    return () => {
+      window.clearInterval(t)
+      window.removeEventListener('resize', center)
+    }
   }, [activeIdx, timed])
 
   // 播放队列：最近播放过歌曲（最新在前）
