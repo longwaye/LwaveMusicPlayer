@@ -165,38 +165,37 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
   }
   const toastTimer = useRef<number | undefined>(undefined)
 
-  // 实时频谱：AnalyserNode 每帧把归一化频率数据写入 spectrumRef（低频→波形高度）
+  // 实时频谱：懒创建（首次播放时在用户手势内初始化，幂等，避免 StrictMode 双执行与 AudioContext 泄漏）
   const spectrumRef = useRef<Float32Array>(new Float32Array(48))
-  useEffect(() => {
-    const a = audioRef.current
-    if (!a) return
-    let raf = 0
-    let analyser: AnalyserNode | null = null
+  const ensureSpectrum = useCallback((a: HTMLAudioElement): AudioContext | undefined => {
+    const tagged = a as unknown as { __lwaveSpectrum?: { actx: AudioContext; analyser: AnalyserNode } }
+    if (tagged.__lwaveSpectrum) return tagged.__lwaveSpectrum.actx
     try {
       const actx = new AudioContext()
       const src = actx.createMediaElementSource(a)
-      analyser = actx.createAnalyser()
+      const analyser = actx.createAnalyser()
       analyser.fftSize = 256
       analyser.smoothingTimeConstant = 0.72
       src.connect(analyser)
       analyser.connect(actx.destination)
-    } catch {
-      return
-    }
-    const N = spectrumRef.current.length
-    const buf = new Uint8Array(analyser.frequencyBinCount)
-    const tick = () => {
-      raf = requestAnimationFrame(tick)
-      analyser!.getByteFrequencyData(buf)
-      const arr = spectrumRef.current
-      for (let i = 0; i < N; i++) {
-        const bin = Math.floor((i / N) * analyser!.frequencyBinCount * 0.34)
-        arr[i] = Math.max(0, Math.min(1, buf[bin] / 255))
+      tagged.__lwaveSpectrum = { actx, analyser }
+      const N = spectrumRef.current.length
+      const buf = new Uint8Array(analyser.frequencyBinCount)
+      const tick = () => {
+        requestAnimationFrame(tick)
+        analyser.getByteFrequencyData(buf)
+        const arr = spectrumRef.current
+        for (let i = 0; i < N; i++) {
+          const bin = Math.floor((i / N) * analyser.frequencyBinCount * 0.34)
+          arr[i] = Math.max(0, Math.min(1, buf[bin] / 255))
+        }
       }
+      tick()
+      return actx
+    } catch {
+      return undefined
     }
-    tick()
-    return () => cancelAnimationFrame(raf)
-  }, [])
+  }, [spectrumRef])
 
   // 持久化本地歌曲库 / 歌词库 / 收藏
   useEffect(() => {
@@ -250,7 +249,9 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
     const a = audioRef.current
     if (!a) return
     if (path) {
-      // 本地歌曲：真实播放
+      // 本地歌曲：真实播放（首次播放时初始化实时频谱，用户手势内 AudioContext 可直接启动）
+      const actx = ensureSpectrum(a)
+      if (actx && actx.state === 'suspended') actx.resume().catch(() => {})
       a.src = window.api.music.toFileUrl(path)
       a.play()
         .then(() => setIsPlaying(true))
@@ -261,7 +262,7 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
       a.removeAttribute('src')
       setIsPlaying(false)
     }
-  }, [])
+  }, [ensureSpectrum])
 
   const togglePlay = useCallback(() => {
     const a = audioRef.current
