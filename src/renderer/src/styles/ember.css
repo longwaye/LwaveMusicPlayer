@@ -40,7 +40,7 @@ img{max-width:100%}
   position:relative;width:52px;height:52px;display:flex;align-items:center;justify-content:center;
   font:14px var(--serif);color:#454139;transition:color .2s ease
 }
-.nav-item i{font:22px/1 var(--sans);font-style:normal;font-weight:300}
+.nav-item i{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;font:22px/1 var(--sans);font-style:normal;font-weight:300}
 .nav-item:hover{color:var(--accent);background:rgba(200,97,54,.08)}
 .nav-item.active{color:var(--accent);background:rgba(200,97,54,.1)}
 .nav-item.active:before{content:"";position:absolute;top:-7px;left:50%;transform:translateX(-50%);width:6px;height:6px;border-radius:50%;background:var(--accent)}
@@ -131,7 +131,7 @@ img{max-width:100%}
 .play-controls{position:relative;display:flex;justify-content:center;align-items:center;gap:34px;margin-top:22px;font-size:18px}
 .volume-control{position:absolute;right:0;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:11px;color:rgba(255,255,255,.92)}
 .volume-icon{display:block;flex:none;width:17px;height:17px;opacity:.95}
-.volume-track{width:58px;height:1px;background:rgba(255,255,255,.55);position:relative;cursor:pointer}
+.volume-track{width:84px;height:1px;background:rgba(255,255,255,.55);position:relative;cursor:pointer}
 .volume-fill{position:absolute;left:0;top:-1px;height:2px;background:var(--accent)}
 .volume-dot{position:absolute;top:-4px;width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 1px rgba(255,255,255,.6)}
 .play-main{width:62px;height:62px;border:1px solid var(--accent);border-radius:50%;display:grid;place-items:center;font-size:18px}
