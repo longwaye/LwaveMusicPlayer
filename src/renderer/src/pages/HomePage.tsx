@@ -56,7 +56,9 @@ export function HomePage(): JSX.Element {
     return () => { alive = false }
   }, [currentPath])
   const cover = currentPath ? (localCover || IMG.hero) : (song?.img ?? IMG.hero)
-  const metaLabel = currentPath ? (local?.year ?? '本地音乐') : (song?.year ?? '')
+  const metaLabel = currentPath
+    ? [local?.album, local?.year].filter(Boolean).join(' · ') || '本地音乐'
+    : (song ? [song.album, song.year].filter(Boolean).join(' · ') : '')
   // 歌词：解析为带时间戳的行，按播放进度高亮当前行并滚动居中
   const rawLyrics = lyricsBySong[currentSong] || ''
   const lrcLines = useMemo(() => parseLrc(rawLyrics), [rawLyrics])
