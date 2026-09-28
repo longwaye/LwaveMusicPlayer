@@ -175,7 +175,7 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
       const src = actx.createMediaElementSource(a)
       const analyser = actx.createAnalyser()
       analyser.fftSize = 256
-      analyser.smoothingTimeConstant = 0.85
+      analyser.smoothingTimeConstant = 0.78
       src.connect(analyser)
       analyser.connect(actx.destination)
       tagged.__lwaveSpectrum = { actx, analyser }
@@ -184,18 +184,12 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
       const tick = () => {
         requestAnimationFrame(tick)
         analyser.getByteFrequencyData(buf)
-        // 低频基线：前 1/3 频段均值，波形围绕基线起伏（贴中线、不杂乱震动）
+        // 自然频谱映射：保留音乐的不规则起伏（平滑由 AnalyserNode smoothing 控制）
         const half = analyser.frequencyBinCount
-        let sum = 0
-        let cnt = 0
-        for (let k = 0; k < half * 0.34; k++) { sum += buf[k]; cnt++ }
-        const base = (sum / (cnt || 1)) / 255
         const arr = spectrumRef.current
         for (let i = 0; i < N; i++) {
           const bin = Math.floor((i / N) * half * 0.34)
-          const v = buf[bin] / 255
-          const target = Math.max(0, Math.min(1, 0.5 + (v - base) * 2.2))
-          arr[i] = arr[i] * 0.72 + target * 0.28 // 指数移动平均，消除不规则抖动
+          arr[i] = Math.max(0, Math.min(1, buf[bin] / 255))
         }
       }
       tick()

@@ -466,7 +466,7 @@ a:hover .placeholder:before,.playlist-card:hover .placeholder:before,.album-card
 .ember-progress__track{position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(255,255,255,.22);transform:translateY(-50%)}
 .ember-progress__remaining{position:absolute;left:var(--progress);right:0;top:50%;height:1px;background:rgba(255,255,255,.1);transform:translateY(-50%)}
 .ember-progress__played{position:absolute;left:0;top:50%;width:var(--progress);height:1px;background:var(--accent);transform:translateY(-50%);box-shadow:0 0 8px rgba(184,92,53,.2)}
-.ember-progress__wave{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;clip-path:inset(0 calc(100% - var(--progress)) 0 0);animation:ember-wave-drift 5s ease-in-out infinite}
+.ember-progress__wave{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;clip-path:inset(0 calc(100% - var(--progress) + 10px) 0 0);animation:ember-wave-drift 5s ease-in-out infinite}
 .ember-progress__wave-line{fill:none;stroke:var(--accent);stroke-width:1.25;vector-effect:non-scaling-stroke}
 .ember-progress__wave-glow{fill:none;stroke:var(--accent);stroke-width:5;vector-effect:non-scaling-stroke;opacity:.14;filter:blur(4px)}
 .ember-progress__thumb{position:absolute;left:var(--progress);top:50%;width:12px;height:12px;padding:0;border:1px solid var(--accent);border-radius:50%;transform:translate(-50%,-50%);background:var(--paper);box-shadow:0 0 0 1px rgba(184,92,53,.12),0 0 10px rgba(184,92,53,.32),0 0 24px rgba(184,92,53,.12);transition:transform var(--ember-fast) var(--ember-ease),background var(--ember-fast) var(--ember-ease);animation:ember-breathe 3.2s ease-in-out infinite}
