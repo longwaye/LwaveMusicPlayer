@@ -1,5 +1,6 @@
 import { ipcMain, dialog, app } from 'electron'
 import { basename } from 'path'
+import { readFileSync } from 'fs'
 
 /**
  * IPC 通道注册模块
@@ -19,6 +20,12 @@ export interface LocalSongEntry {
 export interface ImportFilesResult {
   canceled: boolean
   songs: LocalSongEntry[]
+}
+
+export interface ChooseLyricsResult {
+  canceled: boolean
+  name: string
+  content: string
 }
 
 /** 从文件名剥离扩展名 */
@@ -54,6 +61,26 @@ const channels = {
       .filter((p) => AUDIO_EXTS.some((x) => p.toLowerCase().endsWith(x)))
       .map((p) => ({ name: stripExt(basename(p)), path: p }))
     return { canceled: false, songs }
+  },
+
+  // 选择歌词文件（.lrc / .txt），返回内容
+  'music:choose-lyrics': async (): Promise<ChooseLyricsResult> => {
+    const res = await dialog.showOpenDialog({
+      title: '选择歌词文件',
+      properties: ['openFile'],
+      filters: [{ name: '歌词文件', extensions: ['lrc', 'txt'] }]
+    })
+    if (res.canceled || res.filePaths.length === 0) {
+      return { canceled: true, name: '', content: '' }
+    }
+    const p = res.filePaths[0]
+    let content = ''
+    try {
+      content = readFileSync(p, 'utf-8')
+    } catch (err) {
+      console.error('[music:choose-lyrics] 读取失败', err)
+    }
+    return { canceled: false, name: basename(p), content }
   }
 } as const
 

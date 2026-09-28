@@ -15,6 +15,11 @@ export interface ImportFilesResult {
   canceled: boolean
   songs: LocalSongEntry[]
 }
+export interface ChooseLyricsResult {
+  canceled: boolean
+  name: string
+  content: string
+}
 
 const api = {
   app: {
@@ -23,6 +28,7 @@ const api = {
   music: {
     getDefaultPath: (): Promise<string> => ipcRenderer.invoke('music:get-default-path'),
     importFiles: (): Promise<ImportFilesResult> => ipcRenderer.invoke('music:import-files'),
+    chooseLyrics: (): Promise<ChooseLyricsResult> => ipcRenderer.invoke('music:choose-lyrics'),
     // 把本地音频路径转换为 lwfile:// 播放 URL（基于标准 file URL，保证 Windows 盘符正确）
     toFileUrl: (p: string): string => pathToFileURL(p).toString().replace(/^file:\/\//, 'lwfile://')
   }
