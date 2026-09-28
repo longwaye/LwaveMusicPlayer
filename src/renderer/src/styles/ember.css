@@ -466,11 +466,10 @@ a:hover .placeholder:before,.playlist-card:hover .placeholder:before,.album-card
 .ember-progress__track{position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(255,255,255,.22);transform:translateY(-50%)}
 .ember-progress__remaining{position:absolute;left:var(--progress);right:0;top:50%;height:1px;background:rgba(255,255,255,.1);transform:translateY(-50%)}
 .ember-progress__played{position:absolute;left:0;top:50%;width:var(--progress);height:1px;background:var(--accent);transform:translateY(-50%);box-shadow:0 0 8px rgba(184,92,53,.2)}
-.ember-progress__wave{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;clip-path:inset(0 calc(100% - var(--progress)) 0 0)}
-.ember-progress__wave-line{fill:none;stroke:var(--accent);stroke-width:1.1;vector-effect:non-scaling-stroke;opacity:.85;stroke-dasharray:7 5;animation:ember-wave-flow 1.5s linear infinite}
-.ember-progress__wave-glow{fill:none;stroke:var(--accent);stroke-width:4;vector-effect:non-scaling-stroke;opacity:.12;filter:blur(3px);stroke-dasharray:28 16;animation:ember-wave-flow 1.5s linear infinite}
-.ember-progress__thumb{position:absolute;left:var(--progress);top:50%;width:12px;height:12px;padding:0;border:1px solid var(--accent);border-radius:50%;transform:translate(-50%,-50%);background:var(--paper);box-shadow:0 0 0 1px rgba(184,92,53,.10),0 0 10px rgba(184,92,53,.25),0 0 24px rgba(184,92,53,.09);transition:transform var(--ember-fast) var(--ember-ease),background var(--ember-fast) var(--ember-ease)}
-.ember-progress__thumb:before{content:"";position:absolute;inset:-7px;border:1px solid rgba(184,92,53,.14);border-radius:50%;animation:ember-progress-breathe 3.2s ease-in-out infinite}
-.ember-progress__thumb:after{content:"";position:absolute;inset:-16px;border-radius:50%;background:radial-gradient(circle,rgba(184,92,53,.12),transparent 68%);animation:ember-progress-glow 3.2s ease-in-out infinite;z-index:-1}
+.ember-progress__wave{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;clip-path:inset(0 calc(100% - var(--progress)) 0 0);animation:ember-wave-drift 5s ease-in-out infinite}
+.ember-progress__wave-line{fill:none;stroke:var(--accent);stroke-width:1.25;vector-effect:non-scaling-stroke}
+.ember-progress__wave-glow{fill:none;stroke:var(--accent);stroke-width:5;vector-effect:non-scaling-stroke;opacity:.14;filter:blur(4px)}
+.ember-progress__thumb{position:absolute;left:var(--progress);top:50%;width:12px;height:12px;padding:0;border:1px solid var(--accent);border-radius:50%;transform:translate(-50%,-50%);background:var(--paper);box-shadow:0 0 0 1px rgba(184,92,53,.12),0 0 10px rgba(184,92,53,.32),0 0 24px rgba(184,92,53,.12);transition:transform var(--ember-fast) var(--ember-ease),background var(--ember-fast) var(--ember-ease);animation:ember-breathe 3.2s ease-in-out infinite}
 .ember-progress.is-dragging .ember-progress__thumb{transform:translate(-50%,-50%) scale(1.18);background:var(--accent)}
-@keyframes ember-wave-flow{to{stroke-dashoffset:-24}}
+@keyframes ember-breathe{0%{box-shadow:0 0 0 1px rgba(184,92,53,.10),0 0 8px rgba(184,92,53,.22),0 0 18px rgba(184,92,53,.08)}50%{box-shadow:0 0 0 1px rgba(184,92,53,.16),0 0 14px rgba(184,92,53,.36),0 0 30px rgba(184,92,53,.14)}100%{box-shadow:0 0 0 1px rgba(184,92,53,.10),0 0 8px rgba(184,92,53,.22),0 0 18px rgba(184,92,53,.08)}}
+@keyframes ember-wave-drift{0%,100%{transform:translateY(0)}50%{transform:translateY(.5px)}}
