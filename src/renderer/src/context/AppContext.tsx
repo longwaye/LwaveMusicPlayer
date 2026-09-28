@@ -29,9 +29,17 @@ export interface QueueItem {
   path?: string
 }
 
+/** 收藏歌曲项 */
+export interface LikedSong {
+  name: string
+  artist: string
+  path?: string
+}
+
 /** localStorage 键 */
 const LS_LOCAL_SONGS = 'lwave.localSongs'
 const LS_LYRICS = 'lwave.lyrics'
+const LS_LIKED = 'lwave.likedSongs'
 
 /** 把秒格式化为 mm:ss */
 function fmt(s: number): string {
@@ -64,8 +72,12 @@ interface AppContextValue {
   play: (title: string, path?: string, artist?: string) => void
   /** 从本地音乐中删除某首歌（移除记录；若正在播放则停止） */
   removeLocalSong: (path: string) => void
-  liked: boolean
+  /** 收藏的歌曲（持久化） */
+  likedSongs: LikedSong[]
+  /** 收藏 / 取消收藏当前播放歌曲 */
   toggleLike: () => void
+  /** 从收藏中移除指定歌曲 */
+  removeLiked: (name: string) => void
   themeDark: boolean
   toggleTheme: () => void
   toast: (message: string) => void
@@ -103,7 +115,6 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
   const [currentSong, setCurrentSong] = useState('The Big Ship')
   const [currentArtist, setCurrentArtist] = useState('Brian Eno')
   const [currentPath, setCurrentPath] = useState<string | undefined>(undefined)
-  const [liked, setLiked] = useState(true)
   const [themeDark, setThemeDark] = useState(false)
   const [defaultMusicPath, setDefaultMusicPath] = useState('')
   const [isPlaying, setIsPlaying] = useState(false)
@@ -133,6 +144,16 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
     }
   })
 
+  // 收藏的歌曲：从 localStorage 恢复
+  const [likedSongs, setLikedSongs] = useState<LikedSong[]>(() => {
+    try {
+      const raw = localStorage.getItem(LS_LIKED)
+      return raw ? (JSON.parse(raw) as LikedSong[]) : []
+    } catch {
+      return []
+    }
+  })
+
   // 全局唯一的音频播放器实例
   const audioRef = useRef<HTMLAudioElement | null>(null)
   if (!audioRef.current) {
@@ -141,15 +162,16 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
   }
   const toastTimer = useRef<number | undefined>(undefined)
 
-  // 持久化本地歌曲库与歌词库
+  // 持久化本地歌曲库 / 歌词库 / 收藏
   useEffect(() => {
     try {
       localStorage.setItem(LS_LOCAL_SONGS, JSON.stringify(localSongs))
       localStorage.setItem(LS_LYRICS, JSON.stringify(lyricsBySong))
+      localStorage.setItem(LS_LIKED, JSON.stringify(likedSongs))
     } catch {
       /* 忽略写入失败 */
     }
-  }, [localSongs, lyricsBySong])
+  }, [localSongs, lyricsBySong, likedSongs])
 
   // 初始化本地音乐默认下载位置
   useEffect(() => {
@@ -234,7 +256,19 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
     if (a) a.volume = vol
   }, [])
 
-  const toggleLike = useCallback(() => setLiked((v) => !v), [])
+  // 收藏 / 取消收藏当前播放歌曲
+  const toggleLike = useCallback(() => {
+    setLikedSongs((prev) => {
+      if (prev.some((l) => l.name === currentSong)) return prev.filter((l) => l.name !== currentSong)
+      return [...prev, { name: currentSong, artist: currentArtist, path: currentPath }]
+    })
+  }, [currentSong, currentArtist, currentPath])
+
+  // 从收藏中移除指定歌曲
+  const removeLiked = useCallback((name: string) => {
+    setLikedSongs((prev) => prev.filter((l) => l.name !== name))
+  }, [])
+
   const toggleTheme = useCallback(() => setThemeDark((v) => !v), [])
 
   const toast = useCallback((message: string) => {
@@ -312,8 +346,9 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
       currentPath,
       play,
       removeLocalSong,
-      liked,
+      likedSongs,
       toggleLike,
+      removeLiked,
       themeDark,
       toggleTheme,
       toast,
@@ -333,7 +368,7 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
       lyricsBySong,
       attachLyrics
     }),
-    [route, searchQuery, navigate, currentSong, currentArtist, currentPath, play, removeLocalSong, liked, toggleLike, themeDark, toggleTheme, toast, defaultMusicPath, localSongs, playQueue, importLocalFiles, isPlaying, currentTime, duration, togglePlay, seek, volumeState, setVolume, lyricsBySong, attachLyrics]
+    [route, searchQuery, navigate, currentSong, currentArtist, currentPath, play, removeLocalSong, likedSongs, toggleLike, removeLiked, themeDark, toggleTheme, toast, defaultMusicPath, localSongs, playQueue, importLocalFiles, isPlaying, currentTime, duration, togglePlay, seek, volumeState, setVolume, lyricsBySong, attachLyrics]
   )
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

@@ -23,7 +23,9 @@ function parseLrc(content: string): { time: number; text: string }[] {
 }
 
 export function HomePage(): JSX.Element {
-  const { toast, liked, toggleLike, currentSong, currentArtist, currentPath, isPlaying, togglePlay, seek, currentTimeLabel, durationLabel, currentTime, duration, volume, setVolume, lyricsBySong, attachLyrics, localSongs, playQueue } = useApp()
+  const { toast, likedSongs, toggleLike, currentSong, currentArtist, currentPath, isPlaying, togglePlay, seek, currentTimeLabel, durationLabel, currentTime, duration, volume, setVolume, lyricsBySong, attachLyrics, localSongs, playQueue } = useApp()
+  // 当前歌曲是否已收藏
+  const isFav = likedSongs.some((l) => l.name === currentSong)
   // 当前歌曲的封面与年份（内置曲目跟随歌曲数据；本地歌曲读取文件元数据与内嵌封面）
   const song = songs.find((s) => s.name === currentSong)
   const local = currentPath ? localSongs.find((s) => s.path === currentPath) : undefined
@@ -181,13 +183,11 @@ export function HomePage(): JSX.Element {
             <div className="hero-foot">
               <div className="hero-buttons">
                 <button
-                  className={`circle-btn accent js-like${liked ? ' liked' : ''}`}
-                  onClick={() => { toggleLike(); toast(liked ? '已取消收藏' : '已收藏') }}
+                  className={`circle-btn accent js-like${isFav ? ' liked' : ''}`}
+                  onClick={() => { toggleLike(); toast(isFav ? '已取消收藏' : '已收藏') }}
                 >
-                  ♥
+                  {isFav ? '♥' : '♡'}
                 </button>
-                <button className="circle-btn" onClick={() => toast('已加入播放列表')}>＋</button>
-                <button className="circle-btn" onClick={() => toast('更多操作')}>···</button>
               </div>
               <div className="progress-area">
                 <div className="progress-line" ref={progressRef} onPointerDown={onProgressDown} onPointerMove={onProgressMove} onPointerUp={onProgressUp}>
@@ -197,11 +197,9 @@ export function HomePage(): JSX.Element {
                 <div className="time-row"><span>{currentTimeLabel}</span><span>{durationLabel}</span></div>
               </div>
               <div className="play-controls">
-                <button>⌁</button>
-                <button>◀</button>
+                <button>◀◀</button>
                 <button className="play-main" onClick={togglePlay}>{isPlaying ? 'Ⅱ' : '▶'}</button>
-                <button>▶</button>
-                <button>↻</button>
+                <button>▶▶</button>
                 <div className="volume-control">
                   <svg className="volume-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
                     <path d="M11 5 6 9H3v6h3l5 4V5z" fill="currentColor" stroke="none" />
