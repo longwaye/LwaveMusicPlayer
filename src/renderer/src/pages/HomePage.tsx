@@ -2,7 +2,7 @@ import { useMemo, useRef, useEffect } from 'react'
 import { useApp } from '@renderer/context/AppContext'
 import { HeroSearchBox } from '@renderer/components/ui'
 import { Placeholder } from '@renderer/components/Placeholder'
-import { IMG, homeQueue, songs } from '@renderer/data/ember'
+import { IMG, songs } from '@renderer/data/ember'
 /** 解析 LRC 歌词为带时间戳的行（无时间戳则 time = -1） */
 function parseLrc(content: string): { time: number; text: string }[] {
   const out: { time: number; text: string }[] = []
@@ -23,7 +23,7 @@ function parseLrc(content: string): { time: number; text: string }[] {
 }
 
 export function HomePage(): JSX.Element {
-  const { toast, liked, toggleLike, currentSong, currentArtist, currentPath, isPlaying, togglePlay, currentTimeLabel, durationLabel, currentTime, duration, volume, setVolume, lyricsBySong, attachLyrics, localSongs } = useApp()
+  const { toast, liked, toggleLike, currentSong, currentArtist, currentPath, isPlaying, togglePlay, currentTimeLabel, durationLabel, currentTime, duration, volume, setVolume, lyricsBySong, attachLyrics, localSongs, playQueue } = useApp()
   // 当前歌曲的封面与年份（内置曲目跟随歌曲数据；本地歌曲读取文件元数据）
   const song = songs.find((s) => s.name === currentSong)
   const local = currentPath ? localSongs.find((s) => s.path === currentPath) : undefined
@@ -48,6 +48,36 @@ export function HomePage(): JSX.Element {
       box.scrollTo({ top: Math.max(0, el.offsetTop - box.clientHeight / 2 + el.clientHeight / 2), behavior: 'smooth' })
     }
   }, [activeIdx, timed])
+
+  // 手动滚动歌词后，约 4 秒无操作则自动回到高亮行居中
+  const manualScrollRef = useRef(0)
+  const lastAutoScrollRef = useRef(0)
+  useEffect(() => {
+    if (!timed || activeIdx < 0) return
+    const t = window.setInterval(() => {
+      const now = Date.now()
+      if (now - manualScrollRef.current > 4000 && now - lastAutoScrollRef.current > 2500) {
+        lastAutoScrollRef.current = now
+        const el = activeLineRef.current
+        const box = lyricsListRef.current
+        if (el && box) box.scrollTo({ top: Math.max(0, el.offsetTop - box.clientHeight / 2 + el.clientHeight / 2), behavior: 'smooth' })
+      }
+    }, 1200)
+    return () => window.clearInterval(t)
+  }, [activeIdx, timed])
+
+  // 播放队列：最近播放过歌曲（最新在前）
+  const queueItems = playQueue.map((item, i) => {
+    const s = songs.find((x) => x.name === item.name)
+    const local = item.path ? localSongs.find((x) => x.path === item.path) : undefined
+    return {
+      num: String(i + 1).padStart(2, '0'),
+      name: item.name,
+      artist: item.artist || s?.artist || local?.artist || '',
+      img: s?.img,
+      time: s?.time || (local?.year ? local.year + ' ·' : '')
+    }
+  })
   // 音量条点击设置音量
   const onVolumeClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const r = e.currentTarget.getBoundingClientRect()
@@ -73,7 +103,7 @@ export function HomePage(): JSX.Element {
               </div>
             </div>
             {/* 歌词展示区：有歌词则逐行显示并按进度高亮，无则提供本地上传 */}
-            <div className="lyrics-area" ref={lyricsListRef}>
+            <div className="lyrics-area" ref={lyricsListRef} onWheel={() => { manualScrollRef.current = Date.now() }}>
               {lrcLines.length ? (
                 <div className="lyrics-text">
                   {lrcLines.map((l, i) => (
@@ -125,11 +155,11 @@ export function HomePage(): JSX.Element {
             </div>
           </div>
         </div>
-        {/* PLAY QUEUE */}
+        {/* 播放队列：播放过的歌曲 */}
         <aside className="queue">
           <h2 className="queue-title">Ⅰ　播放队列</h2>
-          {homeQueue.map((t) => (
-            <div className="queue-row" key={t.num}>
+          {queueItems.map((t) => (
+            <div className="queue-row" key={t.num + t.name}>
               <span>{t.num}</span>
               <Placeholder img={t.img} />
               <div>
@@ -139,6 +169,7 @@ export function HomePage(): JSX.Element {
               <time>{t.time}</time>
             </div>
           ))}
+          {queueItems.length === 0 && <p className="queue-empty">播放过的歌曲会出现在这里。</p>}
         </aside>
       </section>
     </main>

@@ -138,10 +138,14 @@ img{max-width:100%}
 
 .queue{
   position:absolute;z-index:3;right:4.5vw;top:170px;width:min(350px,27vw);
-  padding-left:28px;border-left:1px solid rgba(255,255,255,.28)
+  padding:20px 18px;border-radius:14px;
+  background:rgba(20,18,15,.42);
+  -webkit-backdrop-filter:blur(14px) saturate(1.1);backdrop-filter:blur(14px) saturate(1.1);
+  border:1px solid rgba(255,255,255,.08)
 }
-.queue-title{margin:0 0 17px;font:500 15px var(--serif)}
-.queue-row{display:grid;grid-template-columns:30px 42px 1fr 42px;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.18);font:10px var(--serif)}
+.queue-title{margin:0 0 17px;font:500 15px var(--serif);color:rgba(255,255,255,.85)}
+.queue-row{display:grid;grid-template-columns:30px 42px 1fr 42px;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.18);font:10px var(--serif);color:rgba(255,255,255,.9)}
+.queue-empty{color:rgba(255,255,255,.55);font:11px var(--serif);letter-spacing:.06em;margin:10px 0 0}
 .queue-row .placeholder{width:42px;height:34px}
 .queue-row b{font:500 12px var(--serif)}
 .queue-row small{display:block;margin-top:2px;color:rgba(255,255,255,.65)}
