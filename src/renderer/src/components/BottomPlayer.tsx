@@ -2,7 +2,7 @@
  * 全局底部播放条：非首页时固定在窗口底部，功能与首页播放区一致
  * （歌曲信息 / 可拖动进度条 / 播放暂停 / 上一首下一首 / 收藏 / 音量）
  */
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useApp } from '@renderer/context/AppContext'
 
 export function BottomPlayer(): JSX.Element {
@@ -27,6 +27,21 @@ export function BottomPlayer(): JSX.Element {
   } = useApp()
 
   const isFav = likedSongs.some((l) => l.name === currentSong)
+
+  // 专辑封面：本地歌曲从文件读取封面，云歌/无封面时用渐变占位
+  const [cover, setCover] = useState('')
+  useEffect(() => {
+    let alive = true
+    if (currentPath && !/^https?:/.test(currentPath)) {
+      window.api.music
+        .getCover(currentPath)
+        .then((r) => { if (alive && r.cover) setCover(r.cover) })
+        .catch(() => {})
+    } else {
+      setCover('')
+    }
+    return () => { alive = false }
+  }, [currentPath])
 
   // 进度条：点击 / 按住拖动跳转
   const progressRef = useRef<HTMLDivElement>(null)
@@ -90,7 +105,7 @@ export function BottomPlayer(): JSX.Element {
   return (
     <footer className="bottom-player">
       <div className="bp-song">
-        <div className="bp-thumb" />
+        <div className="bp-thumb" style={cover ? { backgroundImage: `url(${cover})`, backgroundSize: 'cover' } : undefined} />
         <div className="bp-meta">
           <strong>{currentSong}</strong>
           <span>{currentArtist}{currentAlbum ? ` · ${currentAlbum}` : ''}</span>

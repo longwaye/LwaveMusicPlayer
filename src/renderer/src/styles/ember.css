@@ -525,4 +525,7 @@ a:hover .placeholder:before,.playlist-card:hover .placeholder:before,.album-card
 .bottom-player .volume-control{display:flex;align-items:center;gap:8px}
 .bottom-player .volume-track{width:74px}
 /* 有底部播放条时给页面内容留出底部空间 */
-.with-player .main{padding-bottom:104px}
+.with-player .main{padding-bottom:104px}/* 底部播放条布局修正：控制组不压缩、播放键无呼吸光环、按钮间距舒展 */
+.bottom-player .bp-controls{flex:none;gap:12px}
+.bp-play:before,.bp-play:after{display:none}
+.bottom-player .bp-song{min-width:180px;max-width:280px}

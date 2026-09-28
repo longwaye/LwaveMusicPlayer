@@ -126,9 +126,8 @@ export function SearchPage(): JSX.Element {
         toast('未获取到播放链接（可能需登录 VIP）')
         return
       }
-      // 播放链接通常为 http，转 https 以满足 CSP media-src，否则音频被拦截无法播放
-      const httpsUrl = url.replace(/^http:\/\//i, 'https://')
-      play(s.name, httpsUrl, s.artist, s.album)
+      // 用原始播放链接（CSP media-src 已放行 http:）；下载走的也是该链接，二者一致
+      play(s.name, url, s.artist, s.album)
       // 播放云歌时联网取歌词，供首页歌词区展示
       window.api.netease
         .lyric(s.id)
