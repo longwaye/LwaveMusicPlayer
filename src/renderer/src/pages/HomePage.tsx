@@ -149,10 +149,15 @@ export function HomePage(): JSX.Element {
     const sp = spectrumRef.current
     const tick = () => {
       raf = requestAnimationFrame(tick)
+      // 去均值：波形形态固定为不规则折线(basePeaks)，各点只做独立轻微震动，避免整条规律升降
+      let sum = 0
+      for (let i = 0; i < sp.length; i++) sum += sp[i]
+      const spAvg = sum / sp.length
       let d = 'M0 50'
       for (let i = 0; i < sp.length; i++) {
         const x = (i / (sp.length - 1)) * 1000
-        const y = Math.max(6, Math.min(94, 50 - (sp[i] - 0.5) * 38))
+        const base = basePeaks[i] // 不规则基础形态
+        const y = Math.max(6, Math.min(94, 50 - (base - 0.5) * 30 - (sp[i] - spAvg) * 12))
         d += ' L' + x.toFixed(1) + ' ' + y.toFixed(1)
       }
       d += ' L1000 50'
@@ -161,7 +166,7 @@ export function HomePage(): JSX.Element {
     }
     tick()
     return () => cancelAnimationFrame(raf)
-  }, [isPlaying, currentPath, wavePath, spectrumRef])
+  }, [isPlaying, currentPath, wavePath, spectrumRef, basePeaks])
 
   // 进度条：ember-progress 结构，点击 / 按住拖动跳转播放进度
   const progressRef = useRef<HTMLDivElement>(null)

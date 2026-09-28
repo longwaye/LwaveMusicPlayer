@@ -184,11 +184,11 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
       const tick = () => {
         requestAnimationFrame(tick)
         analyser.getByteFrequencyData(buf)
-        // 自然频谱映射：保留音乐的不规则起伏（平滑由 AnalyserNode smoothing 控制）
+        // 宽频段映射：各波形点覆盖不同频率（0–0.6 频段），能量差异大，保持各点独立不规则
         const half = analyser.frequencyBinCount
         const arr = spectrumRef.current
         for (let i = 0; i < N; i++) {
-          const bin = Math.floor((i / N) * half * 0.34)
+          const bin = Math.floor((i / N) * half * 0.6)
           arr[i] = Math.max(0, Math.min(1, buf[bin] / 255))
         }
       }
