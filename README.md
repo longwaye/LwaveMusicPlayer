@@ -1,4 +1,4 @@
-# LWAVE·Player
+# LWAVEMusicPlayer
 
 简洁艺术化音乐播放器 · 兼容 macOS / Windows。
 
