@@ -1,6 +1,7 @@
 import { ipcMain, dialog, app } from 'electron'
 import { basename } from 'path'
 import { readFileSync } from 'fs'
+import { parseFile } from 'music-metadata'
 
 /**
  * IPC 通道注册模块
@@ -11,10 +12,12 @@ import { readFileSync } from 'fs'
 /** 支持的本地音频扩展名 */
 const AUDIO_EXTS = ['.mp3', '.flac', '.wav', '.m4a', '.ogg', '.aac', '.opus']
 
-/** 导入结果（渲染进程用） */
+/** 导入结果（渲染进程用）：含音频元数据（艺术家 / 年份） */
 export interface LocalSongEntry {
   name: string
   path: string
+  artist?: string
+  year?: string
 }
 
 export interface ImportFilesResult {
@@ -47,7 +50,7 @@ const channels = {
     }
   },
 
-  // 手动导入：选择音频文件（可多选），返回文件信息
+  // 手动导入：选择音频文件（可多选），读取内置元数据（艺术家 / 年份）
   'music:import-files': async (): Promise<ImportFilesResult> => {
     const res = await dialog.showOpenDialog({
       title: '导入本地音乐',
@@ -57,9 +60,20 @@ const channels = {
     if (res.canceled || res.filePaths.length === 0) {
       return { canceled: true, songs: [] }
     }
-    const songs = res.filePaths
-      .filter((p) => AUDIO_EXTS.some((x) => p.toLowerCase().endsWith(x)))
-      .map((p) => ({ name: stripExt(basename(p)), path: p }))
+    const songs: LocalSongEntry[] = []
+    for (const p of res.filePaths) {
+      if (!AUDIO_EXTS.some((x) => p.toLowerCase().endsWith(x))) continue
+      let artist: string | undefined
+      let year: string | undefined
+      try {
+        const m = await parseFile(p)
+        if (m.common.artist) artist = m.common.artist
+        if (m.common.year) year = String(m.common.year)
+      } catch {
+        // 无元数据时回退到文件名
+      }
+      songs.push({ name: stripExt(basename(p)), path: p, artist, year })
+    }
     return { canceled: false, songs }
   },
 

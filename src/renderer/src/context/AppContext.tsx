@@ -13,10 +13,12 @@ export type Route =
   | 'notes'
   | 'settings'
 
-/** 本地歌曲 */
+/** 本地歌曲（含音频元数据：艺术家 / 年份） */
 export interface LocalSong {
   name: string
   path: string
+  artist?: string
+  year?: string
   lyrics?: string
 }
 
@@ -229,7 +231,7 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
         setLocalSongs((prev) => {
           const merged = [...prev]
           for (const s of res.songs) {
-            if (!merged.some((m) => m.path === s.path)) merged.push({ name: s.name, path: s.path })
+            if (!merged.some((m) => m.path === s.path)) merged.push({ name: s.name, path: s.path, artist: s.artist, year: s.year })
           }
           return merged
         })

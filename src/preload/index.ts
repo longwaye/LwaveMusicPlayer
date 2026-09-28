@@ -10,6 +10,8 @@ import { pathToFileURL } from 'url'
 export interface LocalSongEntry {
   name: string
   path: string
+  artist?: string
+  year?: string
 }
 export interface ImportFilesResult {
   canceled: boolean

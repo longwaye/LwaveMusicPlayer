@@ -25,11 +25,11 @@ export function LibraryPage(): JSX.Element {
             {/* 本地导入的歌曲：真实播放本地文件，可删除记录 */}
             {localSongs.map((s) => (
               <div key={'loc-' + s.path} className="local-song-row">
-                <button className="local-song-play" onClick={() => { play(s.name, s.path); toast('正在播放 · ' + s.name) }}>▶</button>
-                <button className="local-song-body" onClick={() => { play(s.name, s.path); toast('正在播放 · ' + s.name) }}>
+                <button className="local-song-play" onClick={() => { play(s.name, s.path, s.artist); toast('正在播放 · ' + s.name) }}>▶</button>
+                <button className="local-song-body" onClick={() => { play(s.name, s.path, s.artist); toast('正在播放 · ' + s.name) }}>
                   <div className="local-song-meta">
                     <b>{s.name} <em className="local-tag">本地</em></b>
-                    <small>{s.path}</small>
+                    <small>{s.artist ? `${s.artist}${s.year ? ' · ' + s.year : ''}` : s.path}</small>
                   </div>
                 </button>
                 <button className="local-song-remove" title="从本地音乐删除" onClick={() => { removeLocalSong(s.path); toast('已删除 ' + s.name) }}>×</button>

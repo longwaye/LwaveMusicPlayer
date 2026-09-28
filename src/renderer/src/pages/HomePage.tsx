@@ -3,11 +3,12 @@ import { HeroSearchBox } from '@renderer/components/ui'
 import { Placeholder } from '@renderer/components/Placeholder'
 import { IMG, homeQueue, songs } from '@renderer/data/ember'
 export function HomePage(): JSX.Element {
-  const { toast, liked, toggleLike, currentSong, currentArtist, currentPath, isPlaying, togglePlay, currentTimeLabel, durationLabel, currentTime, duration, volume, setVolume, lyricsBySong, attachLyrics } = useApp()
-  // 当前歌曲的封面与年份（内置曲目跟随歌曲数据；本地歌曲无封面用占位）
+  const { toast, liked, toggleLike, currentSong, currentArtist, currentPath, isPlaying, togglePlay, currentTimeLabel, durationLabel, currentTime, duration, volume, setVolume, lyricsBySong, attachLyrics, localSongs } = useApp()
+  // 当前歌曲的封面与年份（内置曲目跟随歌曲数据；本地歌曲读取文件元数据）
   const song = songs.find((s) => s.name === currentSong)
+  const local = currentPath ? localSongs.find((s) => s.path === currentPath) : undefined
   const cover = currentPath ? IMG.hero : (song?.img ?? IMG.hero)
-  const metaLabel = currentPath ? '本地音乐' : (song?.year ?? '')
+  const metaLabel = currentPath ? (local?.year ?? '本地音乐') : (song?.year ?? '')
   // 歌词：优先当前歌曲已保存的歌词，未找到则提示上传本地歌词
   const lyrics = lyricsBySong[currentSong] ? stripLyricTime(lyricsBySong[currentSong]) : ''
   // 音量条点击设置音量
