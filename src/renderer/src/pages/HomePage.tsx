@@ -153,7 +153,7 @@ export function HomePage(): JSX.Element {
       for (let i = 0; i < sp.length; i++) {
         const x = (i / (sp.length - 1)) * 1000
         const y = Math.max(6, Math.min(94, 50 - (sp[i] - 0.5) * 38))
-        d +=  L 
+        d += ' L' + x.toFixed(1) + ' ' + y.toFixed(1)
       }
       d += ' L1000 50'
       line.setAttribute('d', d)
