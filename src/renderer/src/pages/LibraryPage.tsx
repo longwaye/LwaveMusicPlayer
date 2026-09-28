@@ -1,10 +1,9 @@
 /**
- * 本地音乐（原"我的音乐"）
- * 手动导入的本地歌曲与内置曲库合并展示；支持多文件导入。
+ * 本地音乐
+ * 只展示手动导入的本地歌曲；支持多文件导入与删除记录。
  */
 import { useApp } from '@renderer/context/AppContext'
 import { PageHeader, SectionHead } from '@renderer/components/ui'
-import { songs } from '@renderer/data/ember'
 
 export function LibraryPage(): JSX.Element {
   const { play, toast, localSongs, importLocalFiles, removeLocalSong } = useApp()
@@ -19,7 +18,7 @@ export function LibraryPage(): JSX.Element {
         />
 
         <section className="section">
-          <SectionHead title="全部歌曲" linkLabel="＋ 手动导入" onLink={() => importLocalFiles()} />
+          <SectionHead title="本地歌曲" linkLabel="＋ 手动导入" onLink={() => importLocalFiles()} />
 
           <div className="local-song-list">
             {/* 本地导入的歌曲：真实播放本地文件，可删除记录 */}
@@ -34,20 +33,6 @@ export function LibraryPage(): JSX.Element {
                 </button>
                 <button className="local-song-remove" title="从本地音乐删除" onClick={() => { removeLocalSong(s.path); toast('已删除 ' + s.name) }}>×</button>
               </div>
-            ))}
-            {/* 内置曲库歌曲 */}
-            {songs.map((s) => (
-              <button
-                key={'lib-' + s.name}
-                className="local-song-row"
-                onClick={() => { play(s.name, undefined, s.artist); toast('正在播放 · ' + s.name) }}
-              >
-                <span className="local-song-play">▶</span>
-                <div className="local-song-meta">
-                  <b>{s.name}</b>
-                  <small>{s.artist}</small>
-                </div>
-              </button>
             ))}
           </div>
 
