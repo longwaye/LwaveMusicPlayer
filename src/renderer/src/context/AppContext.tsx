@@ -82,6 +82,8 @@ interface AppContextValue {
   currentTime: number
   duration: number
   togglePlay: () => void
+  /** 跳转到指定时间（秒） */
+  seek: (t: number) => void
   currentTimeLabel: string
   durationLabel: string
   /** 音量 0–1 */
@@ -216,6 +218,15 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
     }
   }, [])
 
+  // 跳转到指定时间
+  const seek = useCallback((t: number) => {
+    const a = audioRef.current
+    if (!a) return
+    const max = a.duration || 0
+    a.currentTime = Math.max(0, Math.min(t, max))
+    setCurrentTime(a.currentTime)
+  }, [])
+
   const setVolume = useCallback((v: number) => {
     const vol = Math.max(0, Math.min(1, v))
     setVolumeState(vol)
@@ -314,6 +325,7 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
       currentTime,
       duration,
       togglePlay,
+      seek,
       currentTimeLabel: fmt(currentTime),
       durationLabel: fmt(duration),
       volume: volumeState,
@@ -321,7 +333,7 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
       lyricsBySong,
       attachLyrics
     }),
-    [route, searchQuery, navigate, currentSong, currentArtist, currentPath, play, removeLocalSong, liked, toggleLike, themeDark, toggleTheme, toast, defaultMusicPath, localSongs, playQueue, importLocalFiles, isPlaying, currentTime, duration, togglePlay, volumeState, setVolume, lyricsBySong, attachLyrics]
+    [route, searchQuery, navigate, currentSong, currentArtist, currentPath, play, removeLocalSong, liked, toggleLike, themeDark, toggleTheme, toast, defaultMusicPath, localSongs, playQueue, importLocalFiles, isPlaying, currentTime, duration, togglePlay, seek, volumeState, setVolume, lyricsBySong, attachLyrics]
   )
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

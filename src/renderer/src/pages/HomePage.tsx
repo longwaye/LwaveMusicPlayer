@@ -23,7 +23,7 @@ function parseLrc(content: string): { time: number; text: string }[] {
 }
 
 export function HomePage(): JSX.Element {
-  const { toast, liked, toggleLike, currentSong, currentArtist, currentPath, isPlaying, togglePlay, currentTimeLabel, durationLabel, currentTime, duration, volume, setVolume, lyricsBySong, attachLyrics, localSongs, playQueue } = useApp()
+  const { toast, liked, toggleLike, currentSong, currentArtist, currentPath, isPlaying, togglePlay, seek, currentTimeLabel, durationLabel, currentTime, duration, volume, setVolume, lyricsBySong, attachLyrics, localSongs, playQueue } = useApp()
   // 当前歌曲的封面与年份（内置曲目跟随歌曲数据；本地歌曲读取文件元数据与内嵌封面）
   const song = songs.find((s) => s.name === currentSong)
   const local = currentPath ? localSongs.find((s) => s.path === currentPath) : undefined
@@ -98,12 +98,53 @@ export function HomePage(): JSX.Element {
       time: s?.time || (local?.year ? local.year + ' ·' : '')
     }
   })
-  // 音量条点击设置音量
-  const onVolumeClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const r = e.currentTarget.getBoundingClientRect()
-    const v = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width))
+
+  // 进度条：点击 / 按住拖动跳转播放进度
+  const progressRef = useRef<HTMLDivElement>(null)
+  const progressDragRef = useRef(false)
+  const seekRatio = (clientX: number) => {
+    const box = progressRef.current
+    if (!box || duration <= 0) return
+    const r = box.getBoundingClientRect()
+    const ratio = Math.max(0, Math.min(1, (clientX - r.left) / r.width))
+    seek(ratio * duration)
+  }
+  const onProgressDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    progressDragRef.current = true
+    e.currentTarget.setPointerCapture(e.pointerId)
+    seekRatio(e.clientX)
+  }
+  const onProgressMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (progressDragRef.current) seekRatio(e.clientX)
+  }
+  const onProgressUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    progressDragRef.current = false
+    e.currentTarget.releasePointerCapture(e.pointerId)
+  }
+
+  // 音量条：点击 / 按住拖动设置音量
+  const volumeTrackRef = useRef<HTMLDivElement>(null)
+  const volDragRef = useRef(false)
+  const setVolByX = (clientX: number) => {
+    const box = volumeTrackRef.current
+    if (!box) return
+    const r = box.getBoundingClientRect()
+    const v = Math.max(0, Math.min(1, (clientX - r.left) / r.width))
     setVolume(v)
   }
+  const onVolDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    volDragRef.current = true
+    e.currentTarget.setPointerCapture(e.pointerId)
+    setVolByX(e.clientX)
+  }
+  const onVolMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (volDragRef.current) setVolByX(e.clientX)
+  }
+  const onVolUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    volDragRef.current = false
+    e.currentTarget.releasePointerCapture(e.pointerId)
+  }
+
   const pct = duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0
   return (
     <main className="main home-main">
@@ -149,7 +190,7 @@ export function HomePage(): JSX.Element {
                 <button className="circle-btn" onClick={() => toast('更多操作')}>···</button>
               </div>
               <div className="progress-area">
-                <div className="progress-line">
+                <div className="progress-line" ref={progressRef} onPointerDown={onProgressDown} onPointerMove={onProgressMove} onPointerUp={onProgressUp}>
                   <i className="progress-fill" style={{ width: `${pct}%` }} />
                   <i className="progress-dot" style={{ left: `${pct}%` }} />
                 </div>
@@ -166,7 +207,7 @@ export function HomePage(): JSX.Element {
                     <path d="M11 5 6 9H3v6h3l5 4V5z" fill="currentColor" stroke="none" />
                     {volume > 0 && <path d="M15.5 8.5a5 5 0 0 1 0 7M17.8 6.2a8 8 0 0 1 0 11.6" />}
                   </svg>
-                  <div className="volume-track" onClick={onVolumeClick}>
+                  <div className="volume-track" ref={volumeTrackRef} onPointerDown={onVolDown} onPointerMove={onVolMove} onPointerUp={onVolUp}>
                     <i className="volume-fill" style={{ width: `${volume * 100}%` }} />
                     <i className="volume-dot" style={{ left: `${volume * 100}%` }} />
                   </div>
