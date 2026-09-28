@@ -1,4 +1,4 @@
-import { useMemo, useRef, useEffect, useCallback, useState } from 'react'
+import { useRef, useEffect, useCallback, useState } from 'react'
 import { useApp } from '@renderer/context/AppContext'
 import { HeroSearchBox } from '@renderer/components/ui'
 import { Placeholder } from '@renderer/components/Placeholder'
@@ -121,17 +121,6 @@ export function HomePage(): JSX.Element {
   // 基础波形：切歌时重新生成（稳定的伪波形）
   const [basePeaks, setBasePeaks] = useState<number[]>(() => pseudoPeaks(currentSong))
   useEffect(() => { setBasePeaks(pseudoPeaks(currentSong)) }, [currentSong])
-  // 波形 SVG 折线路径（viewBox 0 0 1000 100）
-  const wavePath = useMemo(() => {
-    let d = 'M0 50'
-    basePeaks.forEach((p, i) => {
-      const x = (i / (basePeaks.length - 1)) * 1000
-      const y = 50 - (p - 0.5) * 34
-      d += ` L${x.toFixed(1)} ${y.toFixed(1)}`
-    })
-    d += ' L1000 50'
-    return d
-  }, [basePeaks])
 
   // 实时频谱驱动波形：本地歌曲真实播放时每帧更新 SVG path（否则保持伪波形）
   const waveLineRef = useRef<SVGPathElement>(null)
@@ -157,7 +146,7 @@ export function HomePage(): JSX.Element {
       for (let i = 0; i < sp.length; i++) {
         const x = (i / (sp.length - 1)) * 1000
         const base = basePeaks[i] // 不规则基础形态
-        const y = Math.max(6, Math.min(94, 50 - (base - 0.5) * 30 - (sp[i] - spAvg) * 12))
+        const y = Math.max(6, Math.min(94, 50 - (base - 0.5) * 30 - (sp[i] - spAvg) * 24))
         d += ' L' + x.toFixed(1) + ' ' + y.toFixed(1)
       }
       d += ' L1000 50'
@@ -274,10 +263,9 @@ export function HomePage(): JSX.Element {
                   <div className="ember-progress__ambient" />
                   <div className="ember-progress__track" />
                   <div className="ember-progress__remaining" />
-                  <svg className="ember-progress__wave" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">
-                    <path ref={waveGlowRef} className="ember-progress__wave-glow" d={wavePath} />
-                    <path ref={waveLineRef} className="ember-progress__wave-line" d={wavePath} />
-                  </svg>
+                  <div className="ember-progress__bars" ref={barsRef}>
+                    {Array.from({ length: BAR_COUNT }, (_, i) => <i key={i} className="ember-progress__bar" />)}
+                  </div>
                   <div className="ember-progress__played" />
                   <button className="ember-progress__thumb" aria-label="拖动播放位置" />
                 </div>
