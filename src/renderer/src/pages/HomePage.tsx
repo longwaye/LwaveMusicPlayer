@@ -122,40 +122,37 @@ export function HomePage(): JSX.Element {
   const [basePeaks, setBasePeaks] = useState<number[]>(() => pseudoPeaks(currentSong))
   useEffect(() => { setBasePeaks(pseudoPeaks(currentSong)) }, [currentSong])
 
-  // 实时频谱驱动波形：本地歌曲真实播放时每帧更新 SVG path（否则保持伪波形）
-  const waveLineRef = useRef<SVGPathElement>(null)
-  const waveGlowRef = useRef<SVGPathElement>(null)
+  // 进度条上方橙色小块：本地歌曲播放时随音乐上下伸缩（否则静态伪波形高度）
+  const barsRef = useRef<HTMLDivElement>(null)
+  const BAR_COUNT = 48
   useEffect(() => {
-    const line = waveLineRef.current
-    const glow = waveGlowRef.current
-    if (!line || !glow) return
+    const bars = barsRef.current
+    if (!bars) return
+    const els = Array.from(bars.children) as HTMLElement[]
     if (!isPlaying || !currentPath) {
-      line.setAttribute('d', wavePath)
-      glow.setAttribute('d', wavePath)
+      els.forEach((el, i) => {
+        const h = basePeaks[i] ?? 0.5
+        el.style.transform = 'scaleY(' + (0.08 + h * 0.24).toFixed(3) + ')'
+      })
       return
     }
     let raf = 0
     const sp = spectrumRef.current
     const tick = () => {
       raf = requestAnimationFrame(tick)
-      // 去均值：波形形态固定为不规则折线(basePeaks)，各点只做独立轻微震动，避免整条规律升降
       let sum = 0
       for (let i = 0; i < sp.length; i++) sum += sp[i]
-      const spAvg = sum / sp.length
-      let d = 'M0 50'
-      for (let i = 0; i < sp.length; i++) {
-        const x = (i / (sp.length - 1)) * 1000
-        const base = basePeaks[i] // 不规则基础形态
-        const y = Math.max(6, Math.min(94, 50 - (base - 0.5) * 30 - (sp[i] - spAvg) * 24))
-        d += ' L' + x.toFixed(1) + ' ' + y.toFixed(1)
+      const avg = sum / sp.length
+      for (let i = 0; i < els.length; i++) {
+        const h = basePeaks[i] ?? 0.5
+        const mod = sp[i] - avg
+        const scale = Math.max(0.05, Math.min(0.75, 0.1 + h * 0.3 + mod * 0.22))
+        els[i].style.transform = 'scaleY(' + scale.toFixed(3) + ')'
       }
-      d += ' L1000 50'
-      line.setAttribute('d', d)
-      glow.setAttribute('d', d)
     }
     tick()
     return () => cancelAnimationFrame(raf)
-  }, [isPlaying, currentPath, wavePath, spectrumRef, basePeaks])
+  }, [isPlaying, currentPath, basePeaks, spectrumRef])
 
   // 进度条：ember-progress 结构，点击 / 按住拖动跳转播放进度
   const progressRef = useRef<HTMLDivElement>(null)
