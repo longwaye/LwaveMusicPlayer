@@ -22,8 +22,8 @@ function parseLrc(content: string): { time: number; text: string }[] {
   return out
 }
 
-/** 稳定的基础波形（按歌曲名生成，用于绘制动态波动进度条） */
-function pseudoPeaks(key: string, n = 240): number[] {
+/** 稳定的基础波形（按歌曲名生成，绘制进度条 SVG 波形折线） */
+function pseudoPeaks(key: string, n = 120): number[] {
   let h = 2166136261
   for (let i = 0; i < key.length; i++) { h ^= key.charCodeAt(i); h = Math.imul(h, 16777619) }
   const rnd = () => { h = Math.imul(h ^ (h >>> 15), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); return ((h ^= h >>> 16) >>> 0) / 4294967296 }
@@ -32,7 +32,7 @@ function pseudoPeaks(key: string, n = 240): number[] {
   for (let i = 0; i < n; i++) {
     v += (rnd() - 0.5) * 0.5
     v *= 0.92
-    out.push(Math.max(0.2, Math.min(1, 0.55 + v)))
+    out.push(Math.max(0.3, Math.min(1, 0.6 + v)))
   }
   return out
 }
@@ -119,11 +119,22 @@ export function HomePage(): JSX.Element {
   // 基础波形：切歌时重新生成（稳定的伪波形）
   const [basePeaks, setBasePeaks] = useState<number[]>(() => pseudoPeaks(currentSong))
   useEffect(() => { setBasePeaks(pseudoPeaks(currentSong)) }, [currentSong])
+  // 波形 SVG 折线路径（viewBox 0 0 1000 100）
+  const wavePath = useMemo(() => {
+    let d = 'M0 50'
+    basePeaks.forEach((p, i) => {
+      const x = (i / (basePeaks.length - 1)) * 1000
+      const y = 50 - (p - 0.5) * 34
+      d += ` L${x.toFixed(1)} ${y.toFixed(1)}`
+    })
+    d += ' L1000 50'
+    return d
+  }, [basePeaks])
 
-  // 进度条：点击 / 按住拖动跳转播放进度
+  // 进度条：ember-progress 结构，点击 / 按住拖动跳转播放进度
   const progressRef = useRef<HTMLDivElement>(null)
-  const waveRef = useRef<HTMLCanvasElement>(null)
   const progressDragRef = useRef(false)
+  const [dragging, setDragging] = useState(false)
   const seekRatio = (clientX: number) => {
     const box = progressRef.current
     if (!box || duration <= 0) return
@@ -133,6 +144,7 @@ export function HomePage(): JSX.Element {
   }
   const onProgressDown = (e: React.PointerEvent<HTMLDivElement>) => {
     progressDragRef.current = true
+    setDragging(true)
     e.currentTarget.setPointerCapture(e.pointerId)
     seekRatio(e.clientX)
   }
@@ -141,69 +153,10 @@ export function HomePage(): JSX.Element {
   }
   const onProgressUp = (e: React.PointerEvent<HTMLDivElement>) => {
     progressDragRef.current = false
+    setDragging(false)
     e.currentTarget.releasePointerCapture(e.pointerId)
   }
   const pct = duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0
-
-  // 动态波动进度条：已播部分橙色小波动；以当前进度圆点为焦点，向两侧大幅环绕衰减
-  const pctRef = useRef(pct)
-  pctRef.current = pct
-  const peaksRef = useRef(basePeaks)
-  peaksRef.current = basePeaks
-  useEffect(() => {
-    let raf = 0
-    const draw = () => {
-      const cv = waveRef.current
-      const box = progressRef.current
-      if (cv && box) {
-        const dpr = window.devicePixelRatio || 1
-        const w = box.clientWidth
-        const h = box.clientHeight
-        if (w > 0 && h > 0) {
-          const pw = Math.round(w * dpr)
-          const ph = Math.round(h * dpr)
-          if (cv.width !== pw || cv.height !== ph) { cv.width = pw; cv.height = ph }
-          cv.style.width = w + 'px'
-          cv.style.height = h + 'px'
-          const ctx = cv.getContext('2d')
-          if (ctx) {
-            ctx.clearRect(0, 0, cv.width, cv.height)
-            const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#c86136'
-            const cy = cv.height / 2
-            // 白色基准线
-            ctx.fillStyle = 'rgba(255,255,255,.5)'
-            ctx.fillRect(0, cy - 0.5 * dpr, cv.width, dpr)
-            const peaks = peaksRef.current
-            const ppct = pctRef.current
-            const n = peaks.length
-            const cutoffF = Math.max(0, Math.min(n - 1, n * (ppct / 100)))
-            const barW = cv.width / n
-            const t = performance.now() / 1000
-            for (let i = 0; i < n; i++) {
-              // 距当前进度点的距离 → 振幅包络：圆点处最大，向两侧指数衰减
-              const d = Math.abs(i - cutoffF)
-              const env = Math.exp(-d * 0.13)
-              // 轻微时间波动，越靠近圆点越明显
-              const wiggle = 0.16 * Math.sin(t * 6 + i * 0.35) * env
-              const amp = Math.max(0.05, peaks[i] * (0.28 + env * 0.72) + wiggle * 0.55)
-              const half = Math.max(1.5 * dpr, amp * cv.height * 0.46)
-              const x = i * barW + barW / 2
-              const played = i <= cutoffF
-              ctx.strokeStyle = played ? accent : 'rgba(255,255,255,.32)'
-              ctx.lineWidth = Math.max(1, barW * 0.6)
-              ctx.beginPath()
-              ctx.moveTo(x, cy - half)
-              ctx.lineTo(x, cy + half)
-              ctx.stroke()
-            }
-          }
-        }
-      }
-      raf = requestAnimationFrame(draw)
-    }
-    draw()
-    return () => cancelAnimationFrame(raf)
-  }, [])
 
   // 音量条：点击 / 按住拖动设置音量
   const volumeTrackRef = useRef<HTMLDivElement>(null)
@@ -270,9 +223,26 @@ export function HomePage(): JSX.Element {
                 </button>
               </div>
               <div className="progress-area">
-                <div className="progress-line" ref={progressRef} onPointerDown={onProgressDown} onPointerMove={onProgressMove} onPointerUp={onProgressUp}>
-                  <canvas className="progress-wave" ref={waveRef} />
-                  <i className="progress-dot" style={{ left: `${pct}%` }} />
+                <div
+                  className={`ember-progress${dragging ? ' is-dragging' : ''}`}
+                  ref={progressRef}
+                  role="slider"
+                  tabIndex={0}
+                  aria-label="播放进度"
+                  style={{ '--progress': `${pct}%` } as React.CSSProperties}
+                  onPointerDown={onProgressDown}
+                  onPointerMove={onProgressMove}
+                  onPointerUp={onProgressUp}
+                >
+                  <div className="ember-progress__ambient" />
+                  <div className="ember-progress__track" />
+                  <div className="ember-progress__remaining" />
+                  <svg className="ember-progress__wave" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">
+                    <path className="ember-progress__wave-glow" d={wavePath} />
+                    <path className="ember-progress__wave-line" d={wavePath} />
+                  </svg>
+                  <div className="ember-progress__played" />
+                  <button className="ember-progress__thumb" aria-label="拖动播放位置" />
                 </div>
                 <div className="time-row"><span>{currentTimeLabel}</span><span>{durationLabel}</span></div>
               </div>
