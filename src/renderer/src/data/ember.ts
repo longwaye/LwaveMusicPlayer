@@ -6,6 +6,7 @@ export interface Song {
   name: string
   artist: string
   album: string
+  year: string
   time: string
   img: string
 }
@@ -18,14 +19,14 @@ export const IMG = {
 }
 /** 歌曲库 */
 export const songs: Song[] = [
-  { num: '01', name: 'The Big Ship', artist: 'Brian Eno', album: 'Ambient 1', time: '04:31', img: IMG.queue(1) },
-  { num: '02', name: 'An Ending', artist: 'Brian Eno', album: 'Another Green World', time: '04:20', img: IMG.queue(2) },
-  { num: '03', name: 'Weightless', artist: 'Marconi Union', album: 'Ambient Zone', time: '08:03', img: IMG.queue(3) },
-  { num: '04', name: 'River', artist: 'Ólafur Arnalds', album: 're:member', time: '04:56', img: IMG.queue(4) },
-  { num: '05', name: 'Only Time', artist: 'Enya', album: 'A Day Without Rain', time: '03:39', img: IMG.queue(5) },
-  { num: '06', name: '2/1', artist: 'Brian Eno', album: 'Ambient 1', time: '08:30', img: IMG.playlist(2) },
-  { num: '07', name: '1/1', artist: 'Brian Eno', album: 'Ambient 1', time: '17:20', img: IMG.playlist(3) },
-  { num: '08', name: 'The Moon', artist: '久石让', album: 'Works II', time: '05:12', img: IMG.playlist(4) }
+  { num: '01', name: 'The Big Ship', artist: 'Brian Eno', album: 'Ambient 1', year: '2006', time: '04:31', img: IMG.queue(1) },
+  { num: '02', name: 'An Ending', artist: 'Brian Eno', album: 'Another Green World', year: '1975', time: '04:20', img: IMG.queue(2) },
+  { num: '03', name: 'Weightless', artist: 'Marconi Union', album: 'Ambient Zone', year: '2009', time: '08:03', img: IMG.queue(3) },
+  { num: '04', name: 'River', artist: 'Ólafur Arnalds', album: 're:member', year: '2018', time: '04:56', img: IMG.queue(4) },
+  { num: '05', name: 'Only Time', artist: 'Enya', album: 'A Day Without Rain', year: '2000', time: '03:39', img: IMG.queue(5) },
+  { num: '06', name: '2/1', artist: 'Brian Eno', album: 'Ambient 1', year: '2006', time: '08:30', img: IMG.playlist(2) },
+  { num: '07', name: '1/1', artist: 'Brian Eno', album: 'Ambient 1', year: '2006', time: '17:20', img: IMG.playlist(3) },
+  { num: '08', name: 'The Moon', artist: '久石让', album: 'Works II', year: '1994', time: '05:12', img: IMG.playlist(4) }
 ]
 /** 专辑（我的音乐 / 专辑详情） */
 export interface Album {
@@ -59,11 +60,11 @@ export const journeys: Journey[] = [
 export const favorites = [songs[0], songs[3], songs[4]]
 /** 首页播放队列（对应静态站 index.html） */
 export const homeQueue: Song[] = [
-  { num: '01', name: 'The Big Ship', artist: 'Brian Eno', album: 'Ambient 1', time: '04:31', img: IMG.queue(1) },
-  { num: '02', name: 'Alone in Kyoto', artist: 'Air', album: 'Talkie Walkie', time: '03:56', img: IMG.queue(2) },
-  { num: '03', name: 'An Ending', artist: 'Brian Eno', album: 'Another Green World', time: '04:20', img: IMG.queue(3) },
-  { num: '04', name: 'Teardrop', artist: 'Massive Attack', album: 'Mezzanine', time: '05:31', img: IMG.queue(4) },
-  { num: '05', name: 'Somewhere', artist: 'M83', album: 'Before the Dawn Heals Us', time: '05:21', img: IMG.queue(5) }
+  { num: '01', name: 'The Big Ship', artist: 'Brian Eno', album: 'Ambient 1', year: '2006', time: '04:31', img: IMG.queue(1) },
+  { num: '02', name: 'Alone in Kyoto', artist: 'Air', album: 'Talkie Walkie', year: '2003', time: '03:56', img: IMG.queue(2) },
+  { num: '03', name: 'An Ending', artist: 'Brian Eno', album: 'Another Green World', year: '1975', time: '04:20', img: IMG.queue(3) },
+  { num: '04', name: 'Teardrop', artist: 'Massive Attack', album: 'Mezzanine', year: '1998', time: '05:31', img: IMG.queue(4) },
+  { num: '05', name: 'Somewhere', artist: 'M83', album: 'Before the Dawn Heals Us', year: '2005', time: '05:21', img: IMG.queue(5) }
 ]
 /** 首页推荐歌单 */
 export const homePlaylists: Journey[] = [
