@@ -1,7 +1,7 @@
 import { ipcMain, dialog, app } from 'electron'
 import { basename } from 'path'
 import { readFileSync } from 'fs'
-import { parseFile } from 'music-metadata'
+import JsMediaTags from 'jsmediatags'
 
 /**
  * IPC 通道注册模块
@@ -37,6 +37,26 @@ function stripExt(fileName: string): string {
   return i > 0 ? fileName.slice(0, i) : fileName
 }
 
+/** 读取音频文件内嵌元数据（艺术家 / 年份），失败时返回空 */
+function readAudioMeta(path: string): Promise<{ artist?: string; year?: string }> {
+  return new Promise((resolve) => {
+    try {
+      new JsMediaTags.Reader(path).read({
+        onSuccess: (tag) => {
+          const t = tag.tags
+          resolve({
+            artist: typeof t.artist === 'string' && t.artist ? t.artist : undefined,
+            year: t.year !== undefined && t.year !== null && t.year !== '' ? String(t.year) : undefined
+          })
+        },
+        onError: () => resolve({})
+      })
+    } catch {
+      resolve({})
+    }
+  })
+}
+
 // 应用基础信息 + 本地音乐
 const channels = {
   'app:get-version': (): string => process.env['npm_package_version'] || '0.0.0',
@@ -66,9 +86,9 @@ const channels = {
       let artist: string | undefined
       let year: string | undefined
       try {
-        const m = await parseFile(p)
-        if (m.common.artist) artist = m.common.artist
-        if (m.common.year) year = String(m.common.year)
+        const meta = await readAudioMeta(p)
+        artist = meta.artist
+        year = meta.year
       } catch {
         // 无元数据时回退到文件名
       }
