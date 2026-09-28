@@ -1,7 +1,27 @@
-import { useApp, stripLyricTime } from '@renderer/context/AppContext'
+import { useMemo, useRef, useEffect } from 'react'
+import { useApp } from '@renderer/context/AppContext'
 import { HeroSearchBox } from '@renderer/components/ui'
 import { Placeholder } from '@renderer/components/Placeholder'
 import { IMG, homeQueue, songs } from '@renderer/data/ember'
+/** 解析 LRC 歌词为带时间戳的行（无时间戳则 time = -1） */
+function parseLrc(content: string): { time: number; text: string }[] {
+  const out: { time: number; text: string }[] = []
+  for (const line of content.split('\n')) {
+    const times = [...line.matchAll(/\[(\d{1,2}):(\d{2})(?:[.:](\d{1,3}))?\]/g)]
+    const text = line.replace(/\[[^\]]*\]/g, '').trim()
+    if (!text) continue
+    if (times.length) {
+      for (const m of times) {
+        out.push({ time: +m[1] * 60 + +m[2] + (+m[3] || 0) / 100, text })
+      }
+    } else {
+      out.push({ time: -1, text })
+    }
+  }
+  out.sort((a, b) => a.time - b.time)
+  return out
+}
+
 export function HomePage(): JSX.Element {
   const { toast, liked, toggleLike, currentSong, currentArtist, currentPath, isPlaying, togglePlay, currentTimeLabel, durationLabel, currentTime, duration, volume, setVolume, lyricsBySong, attachLyrics, localSongs } = useApp()
   // 当前歌曲的封面与年份（内置曲目跟随歌曲数据；本地歌曲读取文件元数据）
@@ -9,8 +29,25 @@ export function HomePage(): JSX.Element {
   const local = currentPath ? localSongs.find((s) => s.path === currentPath) : undefined
   const cover = currentPath ? IMG.hero : (song?.img ?? IMG.hero)
   const metaLabel = currentPath ? (local?.year ?? '本地音乐') : (song?.year ?? '')
-  // 歌词：优先当前歌曲已保存的歌词，未找到则提示上传本地歌词
-  const lyrics = lyricsBySong[currentSong] ? stripLyricTime(lyricsBySong[currentSong]) : ''
+  // 歌词：解析为带时间戳的行，按播放进度高亮当前行并滚动居中
+  const rawLyrics = lyricsBySong[currentSong] || ''
+  const lrcLines = useMemo(() => parseLrc(rawLyrics), [rawLyrics])
+  const timed = lrcLines.some((l) => l.time >= 0)
+  let activeIdx = -1
+  if (timed) {
+    for (let i = 0; i < lrcLines.length; i++) {
+      if (lrcLines[i].time >= 0 && lrcLines[i].time <= currentTime) activeIdx = i
+    }
+  }
+  const lyricsListRef = useRef<HTMLDivElement>(null)
+  const activeLineRef = useRef<HTMLParagraphElement>(null)
+  useEffect(() => {
+    if (timed && activeIdx >= 0 && activeLineRef.current && lyricsListRef.current) {
+      const el = activeLineRef.current
+      const box = lyricsListRef.current
+      box.scrollTo({ top: Math.max(0, el.offsetTop - box.clientHeight / 2 + el.clientHeight / 2), behavior: 'smooth' })
+    }
+  }, [activeIdx, timed])
   // 音量条点击设置音量
   const onVolumeClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const r = e.currentTarget.getBoundingClientRect()
@@ -35,10 +72,14 @@ export function HomePage(): JSX.Element {
                 <span>{metaLabel}</span>
               </div>
             </div>
-            {/* 歌词展示区：有歌词则显示，无则提供本地上传 */}
-            <div className="lyrics-area">
-              {lyrics ? (
-                <div className="lyrics-text">{lyrics}</div>
+            {/* 歌词展示区：有歌词则逐行显示并按进度高亮，无则提供本地上传 */}
+            <div className="lyrics-area" ref={lyricsListRef}>
+              {lrcLines.length ? (
+                <div className="lyrics-text">
+                  {lrcLines.map((l, i) => (
+                    <p key={i} className={'lyric-line' + (timed && i === activeIdx ? ' active' : '')} ref={i === activeIdx ? activeLineRef : undefined}>{l.text}</p>
+                  ))}
+                </div>
               ) : (
                 <div className="lyrics-placeholder">
                   <span>暂无歌词</span>
