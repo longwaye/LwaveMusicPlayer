@@ -11,11 +11,12 @@
  */
 import { ipcMain } from 'electron'
 import { getLyric } from './lyric'
-import { search } from './search'
+import { search, searchHot } from './search'
 import { getSongDetail, getSongUrl } from './song'
 
 export function registerNeteaseHandlers(): void {
   ipcMain.handle('netease:lyric', (_e, id: number | string) => getLyric(id))
+  ipcMain.handle('netease:search-hot', () => searchHot())
   ipcMain.handle(
     'netease:search',
     (_e, keywords: string, type = 1, limit = 30, offset = 0) =>

@@ -1,15 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '@renderer/context/AppContext'
-import { AlbumCard, HeroSearchBox, SectionHead } from '@renderer/components/ui'
+import { HeroSearchBox, SectionHead } from '@renderer/components/ui'
 import { Placeholder } from '@renderer/components/Placeholder'
 import { IMG } from '@renderer/data/ember'
-
-const hotSearches = [
-  { title: 'The Big Ship', meta: 'Brian Eno', img: IMG.playlist(1) },
-  { title: 'Ambient', meta: '氛围音乐', img: IMG.playlist(2) },
-  { title: 'Lost in Winter', meta: '冬日氛围', img: IMG.playlist(3) },
-  { title: 'Nature Sounds', meta: '自然之声', img: IMG.playlist(4) }
-]
 
 interface CloudSong {
   id: number
@@ -20,50 +13,66 @@ interface CloudSong {
   duration: number
 }
 
+/** 每页条数：避免结果撑大窗口，采用分页 */
+const PAGE_SIZE = 10
+
 /** 毫秒时长 -> m:ss */
 const fmtDuration = (ms: number): string => {
   const s = Math.floor(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
 
-export function SearchPage(): JSX.Element {
-  const { searchQuery, navigate, play, toast } = useApp()
-  const [cloudSongs, setCloudSongs] = useState<CloudSong[]>([])
-  const [searching, setSearching] = useState(false)
-  const [activeId, setActiveId] = useState<number>(0)
+/** cloudsearch 返回的歌曲映射为标准行（真实字段为 ar/al/dt，picUrl 转 https + 小图参数） */
+function mapSong(it: any): CloudSong {
+  const pic = it.al?.picUrl ? it.al.picUrl.replace(/^http:\/\//, 'https://') + '?param=100y100' : undefined
+  return {
+    id: it.id,
+    name: it.name,
+    artist: (it.ar ?? []).map((a: any) => a.name).join(' / ') || '未知歌手',
+    album: it.al?.name ?? '',
+    pic,
+    duration: it.dt ?? 0
+  }
+}
 
-  // 关键词变化 -> 搜云歌（网易云曲库）
+export function SearchPage(): JSX.Element {
+  const { searchQuery, navigate, play, toast, addToQueue, toggleLikeSong, likedSongs } = useApp()
+  const [hotWords, setHotWords] = useState<string[]>([])
+  const [cloudSongs, setCloudSongs] = useState<CloudSong[]>([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(0)
+  const [searching, setSearching] = useState(false)
+  const [activeId, setActiveId] = useState(0)
+
+  // 热门搜索：真实热搜榜（进入页面加载一次）
+  useEffect(() => {
+    window.api.netease
+      .searchHot()
+      .then((res) => {
+        const arr = (res as { data?: { searchWord?: string }[] }).data ?? []
+        setHotWords(arr.slice(0, 8).map((h) => h.searchWord ?? '').filter(Boolean))
+      })
+      .catch(() => {})
+  }, [])
+
+  // 云搜索（分页：每次取 PAGE_SIZE 条，offset 随页码变化）
   useEffect(() => {
     const q = searchQuery.trim()
     if (!q) {
       setCloudSongs([])
+      setTotal(0)
+      setPage(0)
       return
     }
     let cancel = false
     setSearching(true)
     window.api.netease
-      .search(q, 1, 30, 0)
+      .search(q, 1, PAGE_SIZE, page * PAGE_SIZE)
       .then((res) => {
         if (cancel) return
-        const raw = (res as { result?: { songs?: unknown[] } }).result?.songs ?? []
-        const songs = raw.map((s) => {
-          const it = s as {
-            id: number
-            name: string
-            artists?: { name: string }[]
-            album?: { name: string; picUrl?: string }
-            duration?: number
-          }
-          return {
-            id: it.id,
-            name: it.name,
-            artist: (it.artists ?? []).map((a) => a.name).join(' / ') || '未知歌手',
-            album: it.album?.name ?? '',
-            pic: it.album?.picUrl,
-            duration: it.duration ?? 0
-          }
-        })
-        setCloudSongs(songs)
+        const r = res as { result?: { songs?: unknown[]; songCount?: number } }
+        setCloudSongs((r.result?.songs ?? []).map(mapSong))
+        setTotal(r.result?.songCount ?? 0)
         setSearching(false)
       })
       .catch(() => {
@@ -75,7 +84,7 @@ export function SearchPage(): JSX.Element {
     return () => {
       cancel = true
     }
-  }, [searchQuery, toast])
+  }, [searchQuery, page, toast])
 
   // 点击云歌 -> 取播放链接并播放
   const handlePlay = async (s: CloudSong) => {
@@ -95,6 +104,14 @@ export function SearchPage(): JSX.Element {
     }
   }
 
+  const handleHot = (word: string) => {
+    setPage(0)
+    navigate('search', word)
+  }
+
+  const isLiked = (name: string) => likedSongs.some((l) => l.name === name)
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
+
   return (
     <main className="main">
       <div className="search-hero" style={{ minHeight: 330, position: 'relative', overflow: 'hidden' }}>
@@ -111,10 +128,13 @@ export function SearchPage(): JSX.Element {
       </div>
       <div className="container">
         <div className="section" style={{ paddingTop: 25 }}>
-          <SectionHead title="热门搜索" linkLabel="查看更多 →" />
-          <div className="grid-4">
-            {hotSearches.map((h) => (
-              <AlbumCard key={h.title} img={h.img} title={h.title} meta={h.meta} phStyle={{ height: 130 }} onClick={() => navigate('album')} />
+          <SectionHead title="热门搜索" />
+          <div className="hot-tags">
+            {hotWords.map((w, i) => (
+              <button key={w} className="hot-tag" onClick={() => handleHot(w)}>
+                <b>{String(i + 1).padStart(2, '0')}</b>
+                <span>{w}</span>
+              </button>
             ))}
           </div>
         </div>
@@ -127,27 +147,32 @@ export function SearchPage(): JSX.Element {
               {searchQuery.trim() ? '没有找到相关歌曲' : '输入关键词，搜索网易云曲库'}
             </div>
           ) : (
-            <div className="search-results">
-              {cloudSongs.map((s, i) => (
-                <button
-                  className={`result-row ${activeId === s.id ? 'result-active' : ''}`}
-                  key={s.id}
-                  onClick={() => handlePlay(s)}
-                >
-                  <span>{i + 1}</span>
-                  <div className="result-title">
-                    {s.pic ? (
-                      <img className="result-cover" src={s.pic} alt={s.name} loading="lazy" />
-                    ) : (
-                      <Placeholder img={IMG.playlist(1)} />
-                    )}
-                    <b>{s.name}</b>
+            <>
+              <div className="search-results">
+                {cloudSongs.map((s) => (
+                  <div className="result-row" key={s.id} onClick={() => handlePlay(s)}>
+                    <span className="result-idx">{String(page * PAGE_SIZE + cloudSongs.indexOf(s) + 1).padStart(2, '0')}</span>
+                    <div className="result-title">
+                      {s.pic ? <img className="result-cover" src={s.pic} alt={s.name} loading="lazy" /> : <span className="result-cover result-cover--ph" />}
+                      <b>{s.name}</b>
+                    </div>
+                    <span className="result-artist">{s.artist}</span>
+                    <span className="result-album">{s.album}</span>
+                    <time className="result-time">{fmtDuration(s.duration)}</time>
+                    <span className="result-actions">
+                      <button className={`result-act ${activeId === s.id ? 'on' : ''}`} title="播放" onClick={(e) => { e.stopPropagation(); handlePlay(s) }}>▶</button>
+                      <button className="result-act" title="加入播放列表" onClick={(e) => { e.stopPropagation(); addToQueue(s.name, s.artist); toast('已加入播放列表') }}>＋</button>
+                      <button className={`result-act like ${isLiked(s.name) ? 'on' : ''}`} title="喜欢" onClick={(e) => { e.stopPropagation(); toggleLikeSong(s.name, s.artist); toast(isLiked(s.name) ? '已取消收藏' : '已收藏') }}>♥</button>
+                    </span>
                   </div>
-                  <span>{s.artist}</span>
-                  <time>{fmtDuration(s.duration)}</time>
-                </button>
-              ))}
-            </div>
+                ))}
+              </div>
+              <div className="pagination">
+                <button disabled={page <= 0} onClick={() => setPage((p) => p - 1)}>‹ 上一页</button>
+                <span>{page + 1} / {totalPages}</span>
+                <button disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)}>下一页 ›</button>
+              </div>
+            </>
           )}
         </div>
       </div>

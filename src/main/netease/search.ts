@@ -43,3 +43,13 @@ export function search(params: SearchParams): Promise<NeteaseSearchResult> {
 export function searchSongs(keywords: string, limit = 30): Promise<NeteaseSearchResult> {
   return search({ keywords, type: 1, limit })
 }
+
+export interface NeteaseHotSearch {
+  data?: { searchWord: string; score?: number; content?: string }[]
+  code: number
+}
+
+/** 热搜榜（搜索页热门搜索） */
+export function searchHot(): Promise<NeteaseHotSearch> {
+  return httpGet('/search/hot/detail') as Promise<NeteaseHotSearch>
+}

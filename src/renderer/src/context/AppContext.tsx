@@ -79,6 +79,10 @@ interface AppContextValue {
   toggleLike: () => void
   /** 从收藏中移除指定歌曲 */
   removeLiked: (name: string) => void
+  /** 把歌曲加入播放队列（不播放） */
+  addToQueue: (name: string, artist: string, path?: string) => void
+  /** 收藏 / 取消收藏指定歌曲（搜索结果行用） */
+  toggleLikeSong: (name: string, artist: string, path?: string) => void
   themeDark: boolean
   toggleTheme: () => void
   toast: (message: string) => void
@@ -308,6 +312,19 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
     setLikedSongs((prev) => prev.filter((l) => l.name !== name))
   }, [])
 
+  // 把指定歌曲加入播放队列（不播放，最新在前去重）
+  const addToQueue = useCallback((name: string, artist: string, path?: string) => {
+    setPlayQueue((prev) => [{ name, artist, path }, ...prev.filter((q) => q.name !== name)])
+  }, [])
+
+  // 收藏 / 取消收藏指定歌曲（搜索结果行用）
+  const toggleLikeSong = useCallback((name: string, artist: string, path?: string) => {
+    setLikedSongs((prev) => {
+      if (prev.some((l) => l.name === name)) return prev.filter((l) => l.name !== name)
+      return [...prev, { name, artist, path }]
+    })
+  }, [])
+
   const toggleTheme = useCallback(() => setThemeDark((v) => !v), [])
 
   const toast = useCallback((message: string) => {
@@ -388,6 +405,8 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
       likedSongs,
       toggleLike,
       removeLiked,
+      addToQueue,
+      toggleLikeSong,
       themeDark,
       toggleTheme,
       toast,
@@ -408,7 +427,7 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
       lyricsBySong,
       attachLyrics
     }),
-    [route, searchQuery, navigate, currentSong, currentArtist, currentPath, play, removeLocalSong, likedSongs, toggleLike, removeLiked, themeDark, toggleTheme, toast, defaultMusicPath, localSongs, playQueue, importLocalFiles, isPlaying, currentTime, duration, togglePlay, seek, volumeState, setVolume, lyricsBySong, attachLyrics]
+    [route, searchQuery, navigate, currentSong, currentArtist, currentPath, play, removeLocalSong, likedSongs, toggleLike, removeLiked, addToQueue, toggleLikeSong, themeDark, toggleTheme, toast, defaultMusicPath, localSongs, playQueue, importLocalFiles, isPlaying, currentTime, duration, togglePlay, seek, volumeState, setVolume, lyricsBySong, attachLyrics]
   )
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
