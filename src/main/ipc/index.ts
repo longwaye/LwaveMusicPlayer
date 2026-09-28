@@ -2,6 +2,7 @@ import { ipcMain, dialog, app } from 'electron'
 import { basename } from 'path'
 import { readFileSync } from 'fs'
 import JsMediaTags from 'jsmediatags'
+import { registerNeteaseHandlers } from '../netease'
 
 /**
  * IPC 通道注册模块
@@ -163,4 +164,5 @@ export function registerIpcHandlers(): void {
   for (const [channel, handler] of Object.entries(channels)) {
     ipcMain.handle(channel, (_event, ...args) => (handler as (...a: unknown[]) => unknown)(...args))
   }
+  registerNeteaseHandlers()
 }

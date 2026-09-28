@@ -34,6 +34,16 @@ const api = {
     getCover: (path: string): Promise<{ cover: string }> => ipcRenderer.invoke('music:get-cover', path),
     // 把本地音频路径转换为 lwfile:// 播放 URL（基于标准 file URL，保证 Windows 盘符正确）
     toFileUrl: (p: string): string => pathToFileURL(p).toString().replace(/^file:\/\//, 'lwfile://')
+  },
+  // 网易云 API（按需封装：歌词 / 搜索 / 歌曲详情 / 播放链接）
+  netease: {
+    lyric: (id: number | string): Promise<unknown> => ipcRenderer.invoke('netease:lyric', id),
+    search: (keywords: string, type = 1, limit = 30, offset = 0): Promise<unknown> =>
+      ipcRenderer.invoke('netease:search', keywords, type, limit, offset),
+    songDetail: (ids: string | number | (string | number)[]): Promise<unknown> =>
+      ipcRenderer.invoke('netease:song-detail', ids),
+    songUrl: (id: number | string, level?: string): Promise<unknown> =>
+      ipcRenderer.invoke('netease:song-url', id, level)
   }
 }
 
