@@ -109,7 +109,7 @@ img{max-width:100%}
 .avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(145deg,#9b8069,#342f2b)}
 .hero-main{flex:1;min-height:0;width:100%;max-width:920px;display:flex;flex-direction:column}
 .hero-head{flex:none;margin-top:18px}
-.lyrics-area{flex:1;min-height:0;width:100%;max-width:640px;margin:0 auto;overflow-y:auto;overflow-x:hidden;display:flex;align-items:flex-start;justify-content:center;-webkit-mask-image:linear-gradient(180deg,transparent,black 10%,black 90%,transparent);mask-image:linear-gradient(180deg,transparent,black 10%,black 90%,transparent)}
+.lyrics-area{flex:1;min-height:0;width:100%;max-width:640px;margin:0 auto;overflow-y:auto;overflow-x:hidden;display:flex;align-items:flex-start;justify-content:center;-webkit-mask-image:linear-gradient(180deg,transparent,black 4%,black 96%,transparent);mask-image:linear-gradient(180deg,transparent,black 4%,black 96%,transparent)}
 .lyrics-area::-webkit-scrollbar{width:0;height:0}
 .lyrics-placeholder{font:12px var(--serif);letter-spacing:.2em;color:rgba(255,255,255,.42);display:flex;align-items:center;gap:16px}
 .lyrics-upload{margin-left:12px;padding:0;border:0;background:none;color:rgba(255,255,255,.82);font:12px var(--serif);letter-spacing:.12em;cursor:pointer;text-decoration:underline;text-underline-offset:4px;transition:color .2s}

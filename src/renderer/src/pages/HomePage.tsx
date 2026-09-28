@@ -1,4 +1,4 @@
-import { useMemo, useRef, useEffect } from 'react'
+import { useMemo, useRef, useEffect, useCallback, useState } from 'react'
 import { useApp } from '@renderer/context/AppContext'
 import { HeroSearchBox } from '@renderer/components/ui'
 import { Placeholder } from '@renderer/components/Placeholder'
@@ -24,10 +24,21 @@ function parseLrc(content: string): { time: number; text: string }[] {
 
 export function HomePage(): JSX.Element {
   const { toast, liked, toggleLike, currentSong, currentArtist, currentPath, isPlaying, togglePlay, currentTimeLabel, durationLabel, currentTime, duration, volume, setVolume, lyricsBySong, attachLyrics, localSongs, playQueue } = useApp()
-  // 当前歌曲的封面与年份（内置曲目跟随歌曲数据；本地歌曲读取文件元数据）
+  // 当前歌曲的封面与年份（内置曲目跟随歌曲数据；本地歌曲读取文件元数据与内嵌封面）
   const song = songs.find((s) => s.name === currentSong)
   const local = currentPath ? localSongs.find((s) => s.path === currentPath) : undefined
-  const cover = currentPath ? IMG.hero : (song?.img ?? IMG.hero)
+  const [localCover, setLocalCover] = useState('')
+  useEffect(() => {
+    if (!currentPath) { setLocalCover(''); return }
+    setLocalCover('')
+    let alive = true
+    window.api.music
+      .getCover(currentPath)
+      .then((r) => { if (alive && r.cover) setLocalCover(r.cover) })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [currentPath])
+  const cover = currentPath ? (localCover || IMG.hero) : (song?.img ?? IMG.hero)
   const metaLabel = currentPath ? (local?.year ?? '本地音乐') : (song?.year ?? '')
   // 歌词：解析为带时间戳的行，按播放进度高亮当前行并滚动居中
   const rawLyrics = lyricsBySong[currentSong] || ''
@@ -41,26 +52,30 @@ export function HomePage(): JSX.Element {
   }
   const lyricsListRef = useRef<HTMLDivElement>(null)
   const activeLineRef = useRef<HTMLParagraphElement>(null)
-  useEffect(() => {
-    if (timed && activeIdx >= 0 && activeLineRef.current && lyricsListRef.current) {
-      const el = activeLineRef.current
-      const box = lyricsListRef.current
-      box.scrollTo({ top: Math.max(0, el.offsetTop - box.clientHeight / 2 + el.clientHeight / 2), behavior: 'smooth' })
-    }
-  }, [activeIdx, timed])
-
-  // 手动滚动或窗口缩放后，约 3 秒无操作则自动回到高亮行居中
   const manualScrollRef = useRef(0)
   const lastAutoScrollRef = useRef(0)
+  // 用元素相对滚动容器的实际位置计算，保证高亮行精确居中
+  const centerActive = useCallback(() => {
+    const el = activeLineRef.current
+    const box = lyricsListRef.current
+    if (!el || !box) return
+    const boxTop = box.getBoundingClientRect().top
+    const elTop = el.getBoundingClientRect().top
+    const target = box.scrollTop + (elTop - boxTop) - box.clientHeight / 2 + el.clientHeight / 2
+    box.scrollTo({ top: Math.max(0, target), behavior: 'smooth' })
+  }, [])
+  useEffect(() => {
+    if (timed && activeIdx >= 0) centerActive()
+  }, [activeIdx, timed, centerActive])
+
+  // 手动滚动或窗口缩放后，约 3 秒无操作则自动回到高亮行居中
   useEffect(() => {
     if (!timed || activeIdx < 0) return
     const center = () => {
       const now = Date.now()
       if (now - manualScrollRef.current > 3000 && now - lastAutoScrollRef.current > 2500) {
         lastAutoScrollRef.current = now
-        const el = activeLineRef.current
-        const box = lyricsListRef.current
-        if (el && box) box.scrollTo({ top: Math.max(0, el.offsetTop - box.clientHeight / 2 + el.clientHeight / 2), behavior: 'smooth' })
+        centerActive()
       }
     }
     const t = window.setInterval(center, 1200)
@@ -69,7 +84,7 @@ export function HomePage(): JSX.Element {
       window.clearInterval(t)
       window.removeEventListener('resize', center)
     }
-  }, [activeIdx, timed])
+  }, [activeIdx, timed, centerActive])
 
   // 播放队列：最近播放过歌曲（最新在前）
   const queueItems = playQueue.map((item, i) => {
