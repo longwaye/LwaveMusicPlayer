@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback, useState } from 'react'
+import { useMemo, useRef, useEffect, useCallback, useState } from 'react'
 import { useApp } from '@renderer/context/AppContext'
 import { HeroSearchBox } from '@renderer/components/ui'
 import { Placeholder } from '@renderer/components/Placeholder'
