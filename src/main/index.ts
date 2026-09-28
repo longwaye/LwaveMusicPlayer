@@ -3,6 +3,7 @@ import { createReadStream, statSync } from 'fs'
 import { Readable } from 'stream'
 import { createMainWindow } from './window'
 import { registerIpcHandlers } from './ipc'
+import { startNeteaseServer, stopNeteaseServer } from './netease/server'
 
 /**
  * LWAVE·Player 主进程入口
@@ -51,6 +52,9 @@ if (!gotTheLock) {
 
   app.whenReady().then(() => {
     registerIpcHandlers()
+
+    // 自启本地网易云 API 服务（数据层），失败不阻塞应用
+    startNeteaseServer().catch((err) => console.warn('[netease] 服务启动失败:', (err as Error).message))
 
     // 处理 lwfile:// 请求：把本地音频文件流式返回，支持 Range（seek / 时长）
     protocol.handle('lwfile', async (request) => {
@@ -104,5 +108,9 @@ if (!gotTheLock) {
     if (process.platform !== 'darwin') {
       app.quit()
     }
+  })
+
+  app.on('before-quit', () => {
+    stopNeteaseServer()
   })
 }

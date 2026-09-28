@@ -13,8 +13,13 @@
 
 import * as http from 'http'
 import * as https from 'https'
+import { getNeteasePort } from './server'
 
-export const NETEASE_BASE = process.env.LWAVE_NETEASE_API || 'http://127.0.0.1:3000'
+/** 本地网易云 API 基础地址：优先环境变量，否则用自启服务端口 */
+export function neteaseBase(): string {
+  if (process.env.LWAVE_NETEASE_API) return process.env.LWAVE_NETEASE_API
+  return 'http://127.0.0.1:' + (getNeteasePort() || 3000)
+}
 
 export interface NeteaseResponse {
   code: number
@@ -23,7 +28,7 @@ export interface NeteaseResponse {
 
 function request(method: 'GET' | 'POST', path: string, params: Record<string, unknown> = {}): Promise<NeteaseResponse> {
   return new Promise((resolve, reject) => {
-    const u = new URL(path, NETEASE_BASE)
+    const u = new URL(path, neteaseBase())
     const q: Record<string, string> = { timestamp: String(Date.now()) }
     for (const [k, v] of Object.entries(params)) {
       if (v !== undefined && v !== null) q[k] = String(v)
