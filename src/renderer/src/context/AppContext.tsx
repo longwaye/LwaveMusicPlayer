@@ -69,10 +69,11 @@ interface AppContextValue {
   /** 当前播放歌曲的歌手（跟随切歌） */
   currentArtist: string
   currentAlbum: string
+  currentArt: string
   /** 当前播放歌曲的本地路径（无则内置曲目） */
   currentPath?: string
   /** 播放歌曲：本地歌曲传 path 触发真实音频；内置歌曲传 artist 用于歌手展示 */
-  play: (title: string, path?: string, artist?: string, album?: string) => void
+  play: (title: string, path?: string, artist?: string, album?: string, art?: string) => void
   /** 从本地音乐中删除某首歌（移除记录；若正在播放则停止） */
   removeLocalSong: (path: string) => void
   /** 收藏的歌曲（持久化） */
@@ -129,6 +130,7 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
   const [currentArtist, setCurrentArtist] = useState('Brian Eno')
   const [currentPath, setCurrentPath] = useState<string | undefined>(undefined)
   const [currentAlbum, setCurrentAlbum] = useState('')
+  const [currentArt, setCurrentArt] = useState('')
   const [themeDark, setThemeDark] = useState(false)
   const [defaultMusicPath, setDefaultMusicPath] = useState('')
   const [isPlaying, setIsPlaying] = useState(false)
@@ -254,11 +256,12 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
     if (q !== undefined && q !== '') setSearchQuery(q)
   }, [])
 
-  const play = useCallback((title: string, path?: string, artist?: string, album?: string) => {
+  const play = useCallback((title: string, path?: string, artist?: string, album?: string, art?: string) => {
     setCurrentSong(title)
     setCurrentPath(path)
     setCurrentArtist(artist || '未知歌手')
     setCurrentAlbum(album || '')
+    setCurrentArt(art || '')
     // 播放过的歌曲加入播放队列（最新在前，去重）
     setPlayQueue((prev) => [{ name: title, artist: artist || '未知歌手', path }, ...prev.filter((q) => q.name !== title)])
     const a = audioRef.current
@@ -420,6 +423,7 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
       currentSong,
       currentArtist,
       currentAlbum,
+      currentArt,
       currentPath,
       play,
       removeLocalSong,
@@ -450,7 +454,7 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
       lyricsBySong,
       attachLyrics
     }),
-    [route, searchQuery, navigate, currentSong, currentArtist, currentAlbum, currentPath, play, removeLocalSong, likedSongs, toggleLike, removeLiked, addToQueue, toggleLikeSong, setLyrics, addLocalSong, themeDark, toggleTheme, toast, defaultMusicPath, localSongs, playQueue, importLocalFiles, isPlaying, currentTime, duration, togglePlay, seek, volumeState, setVolume, lyricsBySong, attachLyrics]
+    [route, searchQuery, navigate, currentSong, currentArtist, currentAlbum, currentArt, currentPath, play, removeLocalSong, likedSongs, toggleLike, removeLiked, addToQueue, toggleLikeSong, setLyrics, addLocalSong, themeDark, toggleTheme, toast, defaultMusicPath, localSongs, playQueue, importLocalFiles, isPlaying, currentTime, duration, togglePlay, seek, volumeState, setVolume, lyricsBySong, attachLyrics]
   )
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

@@ -127,7 +127,7 @@ export function SearchPage(): JSX.Element {
         return
       }
       // 用原始播放链接（CSP media-src 已放行 http:）；下载走的也是该链接，二者一致
-      play(s.name, url, s.artist, s.album)
+      play(s.name, url, s.artist, s.album, s.pic)
       // 播放云歌时联网取歌词，供首页歌词区展示
       window.api.netease
         .lyric(s.id)

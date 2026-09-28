@@ -38,7 +38,7 @@ function pseudoPeaks(key: string, n = 120): number[] {
 }
 
 export function HomePage(): JSX.Element {
-  const { toast, likedSongs, toggleLike, currentSong, currentArtist, currentAlbum, currentPath, isPlaying, togglePlay, seek, currentTimeLabel, durationLabel, currentTime, duration, volume, setVolume, lyricsBySong, attachLyrics, localSongs, playQueue, spectrumRef } = useApp()
+  const { toast, likedSongs, toggleLike, currentSong, currentArtist, currentAlbum, currentArt, currentPath, isPlaying, togglePlay, seek, currentTimeLabel, durationLabel, currentTime, duration, volume, setVolume, lyricsBySong, attachLyrics, localSongs, playQueue, spectrumRef } = useApp()
   // 当前歌曲是否已收藏
   const isFav = likedSongs.some((l) => l.name === currentSong)
   // 当前歌曲的封面与年份（内置曲目跟随歌曲数据；本地歌曲读取文件元数据与内嵌封面）
@@ -55,7 +55,7 @@ export function HomePage(): JSX.Element {
       .catch(() => {})
     return () => { alive = false }
   }, [currentPath])
-  const cover = currentPath ? (localCover || IMG.hero) : (song?.img ?? IMG.hero)
+  const cover = currentArt || (currentPath ? (localCover || IMG.hero) : (song?.img ?? IMG.hero))
   const metaLabel = currentAlbum ? currentAlbum : currentPath ? [local?.album, local?.year].filter(Boolean).join(' · ') || '本地音乐' : (song ? [song.album, song.year].filter(Boolean).join(' · ') : '')
     ? [local?.album, local?.year].filter(Boolean).join(' · ') || '本地音乐'
     : (song ? [song.album, song.year].filter(Boolean).join(' · ') : '')

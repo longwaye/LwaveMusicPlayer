@@ -10,6 +10,7 @@ export function BottomPlayer(): JSX.Element {
     currentSong,
     currentArtist,
     currentAlbum,
+    currentArt,
     currentPath,
     isPlaying,
     togglePlay,
@@ -30,19 +31,21 @@ export function BottomPlayer(): JSX.Element {
   const isFav = likedSongs.some((l) => l.name === currentSong)
 
   // 专辑封面：本地歌曲从文件读取封面，云歌/无封面时用渐变占位
-  const [cover, setCover] = useState('')
+  const [localCover, setLocalCover] = useState('')
   useEffect(() => {
     let alive = true
     if (currentPath && !/^https?:/.test(currentPath)) {
       window.api.music
         .getCover(currentPath)
-        .then((r) => { if (alive && r.cover) setCover(r.cover) })
+        .then((r) => { if (alive && r.cover) setLocalCover(r.cover) })
         .catch(() => {})
     } else {
-      setCover('')
+      setLocalCover('')
     }
     return () => { alive = false }
   }, [currentPath])
+  // 封面：云歌用播放时带的专辑封面，本地歌用文件内嵌封面
+  const cover = currentArt || localCover
 
   // 进度条：点击 / 按住拖动跳转
   const progressRef = useRef<HTMLDivElement>(null)
