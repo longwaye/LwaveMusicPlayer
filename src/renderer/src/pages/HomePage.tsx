@@ -22,6 +22,46 @@ function parseLrc(content: string): { time: number; text: string }[] {
   return out
 }
 
+/** 稳定的伪波形（真实波形未就绪 / 内置曲目时兜底显示） */
+function pseudoPeaks(key: string, n = 240): number[] {
+  let h = 2166136261
+  for (let i = 0; i < key.length; i++) { h ^= key.charCodeAt(i); h = Math.imul(h, 16777619) }
+  const rnd = () => { h = Math.imul(h ^ (h >>> 15), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); return ((h ^= h >>> 16) >>> 0) / 4294967296 }
+  const out: number[] = []
+  let v = 0
+  for (let i = 0; i < n; i++) {
+    v += (rnd() - 0.5) * 0.5
+    v *= 0.92
+    out.push(Math.max(0.15, Math.min(1, 0.5 + v)))
+  }
+  return out
+}
+/** 用 Web Audio 解码本地音频，计算真实波形峰值（0–1） */
+async function computePeaks(url: string, n = 240): Promise<number[] | null> {
+  try {
+    const res = await fetch(url)
+    const buf = await res.arrayBuffer()
+    const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+    const off = new OfflineAudioContext(1, 1, 44100)
+    const ab = await off.decodeAudioData(buf)
+    const data = ab.getChannelData(0)
+    const block = Math.floor(data.length / n) || 1
+    const out: number[] = []
+    for (let i = 0; i < n; i++) {
+      let peak = 0
+      for (let j = 0; j < block; j++) {
+        const a = Math.abs(data[i * block + j])
+        if (a > peak) peak = a
+      }
+      out.push(Math.max(0.12, Math.min(1, peak * 8)))
+    }
+    return out
+  } catch {
+    return null
+  }
+}
+const peaksCache = new Map<string, number[]>()
+
 export function HomePage(): JSX.Element {
   const { toast, likedSongs, toggleLike, currentSong, currentArtist, currentPath, isPlaying, togglePlay, seek, currentTimeLabel, durationLabel, currentTime, duration, volume, setVolume, lyricsBySong, attachLyrics, localSongs, playQueue } = useApp()
   // 当前歌曲是否已收藏
@@ -101,8 +141,25 @@ export function HomePage(): JSX.Element {
     }
   })
 
+  // 波形数据：优先真实缓存，否则伪波形顶住，后台计算真实波形
+  const [peaks, setPeaks] = useState<number[]>(() => pseudoPeaks(currentSong))
+  useEffect(() => {
+    if (currentPath) {
+      const cached = peaksCache.get(currentPath)
+      if (cached) { setPeaks(cached); return }
+    }
+    setPeaks(pseudoPeaks(currentSong))
+    if (!currentPath) return
+    let alive = true
+    computePeaks(window.api.music.toFileUrl(currentPath)).then((p) => {
+      if (alive && p) { peaksCache.set(currentPath, p); setPeaks(p) }
+    })
+    return () => { alive = false }
+  }, [currentSong, currentPath])
+
   // 进度条：点击 / 按住拖动跳转播放进度
   const progressRef = useRef<HTMLDivElement>(null)
+  const waveRef = useRef<HTMLCanvasElement>(null)
   const progressDragRef = useRef(false)
   const seekRatio = (clientX: number) => {
     const box = progressRef.current
@@ -123,6 +180,50 @@ export function HomePage(): JSX.Element {
     progressDragRef.current = false
     e.currentTarget.releasePointerCapture(e.pointerId)
   }
+  const pct = duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0
+
+  // 绘制波形进度条：已播部分橙色实心波形，未播白色基准线，末端圆点
+  useEffect(() => {
+    const cv = waveRef.current
+    const box = progressRef.current
+    if (!cv || !box) return
+    const dpr = window.devicePixelRatio || 1
+    const draw = () => {
+      const w = box.clientWidth
+      const h = box.clientHeight
+      if (w <= 0 || h <= 0) return
+      const pw = Math.round(w * dpr)
+      const ph = Math.round(h * dpr)
+      if (cv.width !== pw || cv.height !== ph) { cv.width = pw; cv.height = ph }
+      cv.style.width = w + 'px'
+      cv.style.height = h + 'px'
+      const ctx = cv.getContext('2d')
+      if (!ctx) return
+      ctx.clearRect(0, 0, cv.width, cv.height)
+      const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#c86136'
+      const cy = cv.height / 2
+      // 白色基准线
+      ctx.fillStyle = 'rgba(255,255,255,.5)'
+      ctx.fillRect(0, cy - 0.5 * dpr, cv.width, dpr)
+      const n = peaks.length
+      const maxAmp = Math.max(2 * dpr, cv.height * 0.82)
+      const cutoff = Math.round(n * (pct / 100))
+      const barW = cv.width / n
+      for (let i = 0; i < n; i++) {
+        const half = Math.max(1.5 * dpr, (peaks[i] * maxAmp) / 2)
+        const x = i * barW + barW / 2
+        ctx.strokeStyle = i <= cutoff ? accent : 'rgba(255,255,255,.32)'
+        ctx.lineWidth = Math.max(1, barW * 0.6)
+        ctx.beginPath()
+        ctx.moveTo(x, cy - half)
+        ctx.lineTo(x, cy + half)
+        ctx.stroke()
+      }
+    }
+    draw()
+    window.addEventListener('resize', draw)
+    return () => window.removeEventListener('resize', draw)
+  }, [peaks, pct])
 
   // 音量条：点击 / 按住拖动设置音量
   const volumeTrackRef = useRef<HTMLDivElement>(null)
@@ -147,7 +248,6 @@ export function HomePage(): JSX.Element {
     e.currentTarget.releasePointerCapture(e.pointerId)
   }
 
-  const pct = duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0
   return (
     <main className="main home-main">
       {/* HERO / NOW PLAYING */}
@@ -191,7 +291,7 @@ export function HomePage(): JSX.Element {
               </div>
               <div className="progress-area">
                 <div className="progress-line" ref={progressRef} onPointerDown={onProgressDown} onPointerMove={onProgressMove} onPointerUp={onProgressUp}>
-                  <i className="progress-fill" style={{ width: `${pct}%` }} />
+                  <canvas className="progress-wave" ref={waveRef} />
                   <i className="progress-dot" style={{ left: `${pct}%` }} />
                 </div>
                 <div className="time-row"><span>{currentTimeLabel}</span><span>{durationLabel}</span></div>
