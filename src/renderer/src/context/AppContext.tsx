@@ -254,7 +254,7 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
       // 本地歌曲：真实播放（首次播放时初始化实时频谱，用户手势内 AudioContext 可直接启动）
       const actx = ensureSpectrum(a)
       if (actx && actx.state === 'suspended') actx.resume().catch(() => {})
-      a.src = window.api.music.toFileUrl(path)
+      a.src = /^https?:/.test(path) ? path : window.api.music.toFileUrl(path)
       a.play()
         .then(() => setIsPlaying(true))
         .catch(() => setIsPlaying(false))

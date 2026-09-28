@@ -205,6 +205,10 @@ img{max-width:100%}
 .history-item{display:flex;align-items:center;gap:18px;height:58px;border-bottom:1px solid var(--line);font:16px var(--serif)}
 .history-item span{color:var(--muted);font-size:12px}
 .search-results .result-row{display:grid;grid-template-columns:35px 1fr 180px 80px;align-items:center;height:62px;border-bottom:1px solid var(--line)}
+button.result-row{background:none;border:0;width:100%;padding:0;text-align:left;cursor:pointer;color:inherit}
+.result-row .result-cover{width:38px;height:38px;border-radius:4px;object-fit:cover}
+.result-row.result-active{color:var(--accent)}
+.result-empty{padding:34px 8px;font:italic 14px var(--serif);color:var(--muted)}
 .result-row .placeholder{width:38px;height:38px}
 .result-title{display:flex;align-items:center;gap:13px}
 .result-title b{font:500 14px var(--serif)}
