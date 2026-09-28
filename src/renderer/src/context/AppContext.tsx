@@ -22,6 +22,13 @@ export interface LocalSong {
   lyrics?: string
 }
 
+/** 播放队列项：播放过的歌曲（最新在前，去重） */
+export interface QueueItem {
+  name: string
+  artist: string
+  path?: string
+}
+
 /** localStorage 键 */
 const LS_LOCAL_SONGS = 'lwave.localSongs'
 const LS_LYRICS = 'lwave.lyrics'
@@ -66,6 +73,8 @@ interface AppContextValue {
   defaultMusicPath: string
   /** 已导入的本地歌曲（持久化） */
   localSongs: LocalSong[]
+  /** 播放队列：播放过的歌曲（最新在前，去重） */
+  playQueue: QueueItem[]
   /** 手动导入本地音乐文件（主进程弹出多文件选择） */
   importLocalFiles: () => Promise<void>
   /** 播放状态 */
@@ -99,6 +108,8 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [volumeState, setVolumeState] = useState(0.7)
+  // 播放队列：播放过的歌曲（最新在前）
+  const [playQueue, setPlayQueue] = useState<QueueItem[]>([])
 
   // 已导入的本地歌曲：从 localStorage 恢复
   const [localSongs, setLocalSongs] = useState<LocalSong[]>(() => {
@@ -174,6 +185,8 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
     setCurrentSong(title)
     setCurrentPath(path)
     setCurrentArtist(artist || '未知歌手')
+    // 播放过的歌曲加入播放队列（最新在前，去重）
+    setPlayQueue((prev) => [{ name: title, artist: artist || '未知歌手', path }, ...prev.filter((q) => q.name !== title)])
     const a = audioRef.current
     if (!a) return
     if (path) {
@@ -295,6 +308,7 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
       toast,
       defaultMusicPath,
       localSongs,
+      playQueue,
       importLocalFiles,
       isPlaying,
       currentTime,
@@ -307,7 +321,7 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
       lyricsBySong,
       attachLyrics
     }),
-    [route, searchQuery, navigate, currentSong, currentArtist, currentPath, play, removeLocalSong, liked, toggleLike, themeDark, toggleTheme, toast, defaultMusicPath, localSongs, importLocalFiles, isPlaying, currentTime, duration, togglePlay, volumeState, setVolume, lyricsBySong, attachLyrics]
+    [route, searchQuery, navigate, currentSong, currentArtist, currentPath, play, removeLocalSong, liked, toggleLike, themeDark, toggleTheme, toast, defaultMusicPath, localSongs, playQueue, importLocalFiles, isPlaying, currentTime, duration, togglePlay, volumeState, setVolume, lyricsBySong, attachLyrics]
   )
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
