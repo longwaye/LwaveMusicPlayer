@@ -337,3 +337,123 @@ img{max-width:100%}
 .local-tag{display:inline-block;margin-left:8px;padding:1px 7px;font:9px/1 var(--sans);letter-spacing:.08em;color:var(--accent);border:1px solid var(--accent);border-radius:2px;vertical-align:2px}
 
 .progress-fill{position:absolute;left:0;top:-1px;height:2px;background:var(--accent)}
+
+
+/* =========================================================
+   EMBER MOTION SYSTEM（移植自 EMBER static-site）
+   ========================================================= */
+:root{
+  --ember-ease:cubic-bezier(.22,.61,.36,1);
+  --ember-ease-soft:cubic-bezier(.16,1,.3,1);
+  --ember-fast:180ms;
+  --ember-medium:420ms;
+  --ember-slow:900ms;
+}
+.app{position:relative;overflow-x:hidden}
+.app:before{
+  content:"";position:fixed;z-index:180;inset:0;pointer-events:none;opacity:.028;
+  background-image:radial-gradient(circle at 20% 30%,#24221e 0 .55px,transparent .7px),radial-gradient(circle at 70% 60%,#24221e 0 .5px,transparent .7px);
+  background-size:17px 13px,23px 19px;mix-blend-mode:multiply;
+}
+.app:after{
+  content:"";position:fixed;z-index:179;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 45%,rgba(36,34,30,.045) 100%);
+}
+.main > *{animation:ember-page-in .72s var(--ember-ease-soft) both}
+@keyframes ember-page-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.nav-item{transition:color var(--ember-medium) var(--ember-ease),transform var(--ember-medium) var(--ember-ease),background var(--ember-medium) var(--ember-ease)}
+.nav-item:hover{transform:translateX(3px)}
+.nav-item i{transition:transform var(--ember-medium) var(--ember-ease),opacity var(--ember-medium) var(--ember-ease)}
+.nav-item:hover i{transform:translateX(1px);opacity:.72}
+.section-link{position:relative;transition:color var(--ember-fast) var(--ember-ease)}
+.section-link:after{content:"";position:absolute;left:0;right:0;bottom:-4px;height:1px;transform:scaleX(0);transform-origin:right;background:currentColor;transition:transform var(--ember-medium) var(--ember-ease)}
+.section-link:hover:after{transform:scaleX(1);transform-origin:left}
+.search-box{transition:border-color var(--ember-medium) var(--ember-ease),background var(--ember-medium) var(--ember-ease),box-shadow var(--ember-medium) var(--ember-ease)}
+.search-box:focus-within{border-color:rgba(255,255,255,.85);background:rgba(255,255,255,.07);box-shadow:0 0 0 4px rgba(255,255,255,.035)}
+.search-box input{caret-color:var(--accent)}
+.placeholder{isolation:isolate;transition:transform 800ms var(--ember-ease-soft),filter 800ms var(--ember-ease-soft)}
+.placeholder:before{content:"";position:absolute;z-index:1;inset:-12%;background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.11) 49%,transparent 60%);transform:translateX(-125%);transition:transform 1100ms var(--ember-ease-soft)}
+a:hover .placeholder,.playlist-card:hover .placeholder,.album-card:hover .placeholder{transform:scale(1.018);filter:saturate(.9) contrast(1.01)}
+a:hover .placeholder:before,.playlist-card:hover .placeholder:before,.album-card:hover .placeholder:before{transform:translateX(125%)}
+/* Hero 电影感缓慢呼吸 + 光线扫过 */
+.hero-image{transform:scale(1.015);animation:ember-film-breathe 12s ease-in-out infinite alternate}
+@keyframes ember-film-breathe{from{transform:scale(1.015) translate3d(0,0,0)}to{transform:scale(1.035) translate3d(-.35%,.25%,0)}}
+.hero-image:after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.035;background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);transform:translateX(-120%);animation:ember-light-pass 9s 2s var(--ember-ease) infinite}
+@keyframes ember-light-pass{0%,65%{transform:translateX(-120%)}85%,100%{transform:translateX(120%)}}
+/* 页面进入分段淡入（上升） */
+.hero-kicker{animation:ember-rise .8s .1s both var(--ember-ease-soft)}
+.hero-title{animation:ember-rise 1s .18s both var(--ember-ease-soft)}
+.hero-artist{animation:ember-rise .9s .28s both var(--ember-ease-soft)}
+.hero-meta{animation:ember-rise .8s .38s both var(--ember-ease-soft)}
+.hero-buttons{animation:ember-rise .8s .48s both var(--ember-ease-soft)}
+.progress-area{animation:ember-rise .9s .58s both var(--ember-ease-soft)}
+.play-controls{animation:ember-rise .8s .68s both var(--ember-ease-soft)}
+@keyframes ember-rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+/* 圆形按钮（收藏/操作）扫光 + 位移 + 按压 */
+.circle-btn{position:relative;overflow:hidden;transition:color var(--ember-medium) var(--ember-ease),border-color var(--ember-medium) var(--ember-ease),transform var(--ember-medium) var(--ember-ease),background var(--ember-medium) var(--ember-ease)}
+.circle-btn:before{content:"";position:absolute;inset:0;border-radius:inherit;background:rgba(255,255,255,.08);transform:scale(0);transition:transform var(--ember-medium) var(--ember-ease-soft)}
+.circle-btn:hover{transform:translateY(-2px)}.circle-btn:hover:before{transform:scale(1)}.circle-btn:active{transform:scale(.94)}
+.js-like.liked,.js-like:hover{color:var(--accent);border-color:var(--accent)}.js-like.liked{animation:ember-heart .45s var(--ember-ease-soft)}
+@keyframes ember-heart{0%{transform:scale(1)}45%{transform:scale(1.13)}100%{transform:scale(1)}}
+/* 播放控制键 hover 位移 */
+.play-controls button,.player-controls button,.mini-pause{transition:color var(--ember-fast) var(--ember-ease),transform var(--ember-fast) var(--ember-ease)}
+.play-controls button:hover,.player-controls button:hover,.mini-pause:hover{color:var(--accent);transform:translateY(-1px)}
+/* 主播放按钮 Magma Core 呼吸 */
+.play-main{position:relative;overflow:visible;transition:transform var(--ember-medium) var(--ember-ease),box-shadow var(--ember-medium) var(--ember-ease)}
+.play-main:before{content:"";position:absolute;inset:-7px;border-radius:50%;border:1px solid rgba(184,92,53,.16);animation:ember-core-breathe 3.4s ease-in-out infinite}
+.play-main:after{content:"";position:absolute;inset:-16px;border-radius:50%;background:radial-gradient(circle,rgba(184,92,53,.11),transparent 65%);animation:ember-core-glow 3.4s ease-in-out infinite;z-index:-1}
+.play-main:hover{transform:scale(1.04)}
+@keyframes ember-core-breathe{0%,100%{transform:scale(1);opacity:.35}50%{transform:scale(1.18);opacity:.85}}
+@keyframes ember-core-glow{0%,100%{transform:scale(.88);opacity:.25}50%{transform:scale(1.15);opacity:.65}}
+/* 进度圆点呼吸 + 光晕（Magma） */
+.progress-dot{transition:transform var(--ember-fast) var(--ember-ease)}
+.progress-dot:before{content:"";position:absolute;inset:-7px;border:1px solid rgba(184,92,53,.12);border-radius:50%;animation:ember-progress-breathe 3.2s ease-in-out infinite}
+.progress-dot:after{content:"";position:absolute;inset:-16px;border-radius:50%;background:radial-gradient(circle,rgba(184,92,53,.10),transparent 68%);animation:ember-progress-glow 3.2s ease-in-out infinite;z-index:-1}
+@keyframes ember-progress-breathe{0%,100%{transform:scale(1);opacity:.35}50%{transform:scale(1.18);opacity:.85}}
+@keyframes ember-progress-glow{0%,100%{transform:scale(.85);opacity:.22}50%{transform:scale(1.15);opacity:.62}}
+/* Queue 播放队列 hover */
+.queue-row{transition:background var(--ember-medium) var(--ember-ease),padding-left var(--ember-medium) var(--ember-ease)}
+.queue-row:hover{background:rgba(255,255,255,.055);padding-left:6px}
+/* 歌单 / 专辑轻微上浮 */
+.playlist-card,.album-card{display:block;transition:transform var(--ember-medium) var(--ember-ease)}
+.playlist-card:hover,.album-card:hover{transform:translateY(-3px)}
+.playlist-card h3,.album-card h3{transition:color var(--ember-medium) var(--ember-ease)}
+.playlist-card:hover h3,.album-card:hover h3{color:var(--accent)}
+/* Song Row hover */
+.song-table tbody tr{transition:background var(--ember-medium) var(--ember-ease)}
+.song-table tbody tr:hover{background:rgba(36,34,30,.025)}
+.song-table tbody tr .song-thumb{transition:transform 600ms var(--ember-ease-soft)}
+.song-table tbody tr:hover .song-thumb{transform:scale(1.05)}
+.song-name{transition:color var(--ember-fast) var(--ember-ease)}
+.song-table tbody tr:hover .song-name{color:var(--accent)}
+/* Field Notes 微交互 */
+.note{transition:padding-left var(--ember-medium) var(--ember-ease)}
+.note:hover{padding-left:8px}
+.note h2{transition:color var(--ember-medium) var(--ember-ease)}
+.note:hover h2{color:var(--accent)}
+/* Settings hover */
+.setting-row{transition:background var(--ember-medium) var(--ember-ease),padding-left var(--ember-medium) var(--ember-ease)}
+.setting-row:hover{background:rgba(36,34,30,.018);padding-left:8px}
+.setting-value{transition:letter-spacing var(--ember-medium) var(--ember-ease)}
+.setting-row:hover .setting-value{letter-spacing:.15em}
+/* Bottom Player 微交互 */
+.mini-player{box-shadow:0 -8px 30px rgba(36,34,30,.025)}
+.mini-song .placeholder{transition:transform 600ms var(--ember-ease-soft)}
+.mini-song:hover .placeholder{transform:scale(1.04)}
+.mini-track{cursor:pointer}.mini-track i{transition:transform var(--ember-fast) var(--ember-ease)}.mini-track:hover i{transform:scale(1.3)}
+.volume{cursor:pointer}.volume i{transition:transform var(--ember-fast) var(--ember-ease)}.volume:hover i{transform:scale(1.25)}
+/* ASH / EMBER 主题切换 */
+.app.theme-dark{--paper:#151411;--paper2:#1e1c18;--paper3:#29231e;--ink:#d8d0c2;--muted:#91887d;--faint:#716960;--line:rgba(216,208,194,.14)}
+.app.theme-dark .sidebar,.app.theme-dark .mini-player{background:rgba(30,28,24,.98)}
+/* prefers-reduced-motion 无障碍 */
+@media(prefers-reduced-motion:reduce){
+  *,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
+  .main>*,.hero-image,.hero-image:after,.play-main:before,.play-main:after,.progress-dot:before,.progress-dot:after,.app:before{animation:none!important}
+}
+/* hero-image 保留电影遮罩（覆盖 placeholder:before 扫光，避免主图被扫光取代） */
+.hero-image:before{
+  content:"";position:absolute;inset:0;z-index:1;transform:none;transition:none;
+  background:
+    radial-gradient(ellipse at 61% 35%,rgba(238,215,184,.3),transparent 26%),
+    linear-gradient(90deg,rgba(30,29,26,.42),transparent 60%,rgba(34,32,29,.2));
+}
