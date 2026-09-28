@@ -30,11 +30,12 @@ export interface QueueItem {
   path?: string
 }
 
-/** 收藏歌曲项 */
+/** 收藏歌曲项（key 为唯一标识，云歌用 n+neteaseId，避免同名歌曲联动） */
 export interface LikedSong {
   name: string
   artist: string
   path?: string
+  key?: string
 }
 
 /** localStorage 键 */
@@ -81,8 +82,12 @@ interface AppContextValue {
   removeLiked: (name: string) => void
   /** 把歌曲加入播放队列（不播放） */
   addToQueue: (name: string, artist: string, path?: string) => void
-  /** 收藏 / 取消收藏指定歌曲（搜索结果行用） */
-  toggleLikeSong: (name: string, artist: string, path?: string) => void
+  /** 收藏 / 取消收藏指定歌曲（key 唯一标识，搜索结果行用） */
+  toggleLikeSong: (name: string, artist: string, path?: string, key?: string) => void
+  /** 为指定歌曲设置歌词文本（联网云歌词用） */
+  setLyrics: (name: string, text: string) => void
+  /** 把下载的云歌加入本地音乐列表（按路径去重） */
+  addLocalSong: (name: string, path: string, artist?: string, album?: string) => void
   themeDark: boolean
   toggleTheme: () => void
   toast: (message: string) => void
@@ -317,12 +322,23 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
     setPlayQueue((prev) => [{ name, artist, path }, ...prev.filter((q) => q.name !== name)])
   }, [])
 
-  // 收藏 / 取消收藏指定歌曲（搜索结果行用）
-  const toggleLikeSong = useCallback((name: string, artist: string, path?: string) => {
+  // 收藏 / 取消收藏指定歌曲（key 唯一标识，避免同名歌曲联动）
+  const toggleLikeSong = useCallback((name: string, artist: string, path?: string, key?: string) => {
     setLikedSongs((prev) => {
-      if (prev.some((l) => l.name === name)) return prev.filter((l) => l.name !== name)
-      return [...prev, { name, artist, path }]
+      const exists = prev.some((l) => (key ? l.key === key : l.name === name))
+      if (exists) return prev.filter((l) => (key ? l.key !== key : l.name !== name))
+      return [...prev, { name, artist, path, key }]
     })
+  }, [])
+
+  // 为指定歌曲设置歌词文本（联网云歌词用）
+  const setLyrics = useCallback((name: string, text: string) => {
+    if (text.trim()) setLyricsBySong((prev) => ({ ...prev, [name]: text }))
+  }, [])
+
+  // 把下载的云歌加入本地音乐列表（按路径去重）
+  const addLocalSong = useCallback((name: string, path: string, artist?: string, album?: string) => {
+    setLocalSongs((prev) => (prev.some((s) => s.path === path) ? prev : [...prev, { name, path, artist, album }]))
   }, [])
 
   const toggleTheme = useCallback(() => setThemeDark((v) => !v), [])
@@ -407,6 +423,8 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
       removeLiked,
       addToQueue,
       toggleLikeSong,
+      setLyrics,
+      addLocalSong,
       themeDark,
       toggleTheme,
       toast,
@@ -427,7 +445,7 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
       lyricsBySong,
       attachLyrics
     }),
-    [route, searchQuery, navigate, currentSong, currentArtist, currentPath, play, removeLocalSong, likedSongs, toggleLike, removeLiked, addToQueue, toggleLikeSong, themeDark, toggleTheme, toast, defaultMusicPath, localSongs, playQueue, importLocalFiles, isPlaying, currentTime, duration, togglePlay, seek, volumeState, setVolume, lyricsBySong, attachLyrics]
+    [route, searchQuery, navigate, currentSong, currentArtist, currentPath, play, removeLocalSong, likedSongs, toggleLike, removeLiked, addToQueue, toggleLikeSong, setLyrics, addLocalSong, themeDark, toggleTheme, toast, defaultMusicPath, localSongs, playQueue, importLocalFiles, isPlaying, currentTime, duration, togglePlay, seek, volumeState, setVolume, lyricsBySong, attachLyrics]
   )
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

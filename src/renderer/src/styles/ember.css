@@ -217,12 +217,12 @@ img{max-width:100%}
 .result-title b{font:500 14px var(--serif);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .result-cover{width:42px;height:42px;border-radius:4px;object-fit:cover;flex:none}
 .result-cover--ph{background:var(--line)}
-.result-artist,.result-album{font:12.5px var(--serif);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.result-time{font:12px var(--serif);color:var(--muted)}
-.result-actions{display:flex;gap:6px;align-items:center;justify-content:flex-end}
-.result-act{background:none;border:0;width:26px;height:26px;border-radius:50%;font:12px var(--serif);color:var(--muted);cursor:pointer;transition:.15s}
-.result-act:hover{color:var(--accent);background:rgba(184,92,53,.1)}
-.result-act.on{color:var(--accent)}
+.result-artist,.result-album{font:13.5px var(--serif);color:var(--ink);opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.result-time{font:13px var(--serif);color:var(--faint)}
+.result-actions{display:flex;gap:8px;align-items:center;justify-content:flex-end}
+.result-act{background:none;border:1px solid transparent;width:30px;height:30px;border-radius:50%;font:14px var(--serif);color:var(--muted);cursor:pointer;transition:.15s}
+.result-act:hover{color:var(--accent);border-color:rgba(184,92,53,.35);background:rgba(184,92,53,.1)}
+.result-act.on{color:var(--accent);border-color:rgba(184,92,53,.4);background:rgba(184,92,53,.08)}
 /* 分页 */
 .pagination{display:flex;align-items:center;justify-content:center;gap:16px;padding:18px 0 4px;font:12px var(--serif);color:var(--muted)}
 .pagination button{background:none;border:1px solid var(--line);border-radius:20px;padding:5px 14px;font:12px var(--serif);color:inherit;cursor:pointer;transition:.15s}

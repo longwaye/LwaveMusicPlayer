@@ -45,7 +45,7 @@ function mapSong(it: any): CloudSong {
 }
 
 export function SearchPage(): JSX.Element {
-  const { searchQuery, navigate, play, toast, addToQueue, toggleLikeSong, likedSongs } = useApp()
+  const { searchQuery, navigate, play, toast, addToQueue, toggleLikeSong, setLyrics, addLocalSong, likedSongs } = useApp()
   const [hotWords, setHotWords] = useState<string[]>([])
   const [cloudSongs, setCloudSongs] = useState<CloudSong[]>([])
   const [total, setTotal] = useState(0)
@@ -127,6 +127,14 @@ export function SearchPage(): JSX.Element {
         return
       }
       play(s.name, url, s.artist)
+      // 播放云歌时联网取歌词，供首页歌词区展示
+      window.api.netease
+        .lyric(s.id)
+        .then((lr) => {
+          const text = (lr as { lrc?: { lyric?: string } }).lrc?.lyric
+          if (text) setLyrics(s.name, text)
+        })
+        .catch(() => {})
     } catch {
       setActiveId(0)
       toast('播放失败')
@@ -155,19 +163,22 @@ export function SearchPage(): JSX.Element {
     navigate('search', word)
   }
 
-  const isLiked = (name: string) => likedSongs.some((l) => l.name === name)
+  const isLiked = (s: CloudSong) => likedSongs.some((l) => l.key === 'n' + s.id)
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
   const menuLike = (s: CloudSong) => {
-    toggleLikeSong(s.name, s.artist)
-    toast(isLiked(s.name) ? '已取消收藏' : '已收藏')
+    toggleLikeSong(s.name, s.artist, undefined, 'n' + s.id)
+    toast(isLiked(s) ? '已取消收藏' : '已收藏')
     setMenu(null)
   }
   const menuDownloadSong = async (s: CloudSong) => {
     setMenu(null)
     toast('开始下载歌曲…')
     const res = (await window.api.netease.downloadSong(s.id, s.name)) as { ok?: boolean; path?: string }
-    if (res?.ok) toast(`已下载：${s.name}`)
+    if (res?.ok) {
+      if (res.path) addLocalSong(s.name, res.path, s.artist, s.album)
+      toast(`已下载并加入本地音乐：${s.name}`)
+    }
     else toast('下载失败（可能需登录 VIP）')
   }
   const menuDownloadLyric = async (s: CloudSong) => {
@@ -233,7 +244,7 @@ export function SearchPage(): JSX.Element {
                     <span className="result-actions">
                       <button className={`result-act ${activeId === s.id ? 'on' : ''}`} title="播放" onClick={(e) => { e.stopPropagation(); onRowDouble(s) }}>▶</button>
                       <button className="result-act" title="加入播放列表" onClick={(e) => { e.stopPropagation(); addToQueue(s.name, s.artist); toast('已加入播放列表') }}>＋</button>
-                      <button className={`result-act like ${isLiked(s.name) ? 'on' : ''}`} title="喜欢" onClick={(e) => { e.stopPropagation(); menuLike(s) }}>♥</button>
+                      <button className={`result-act like ${isLiked(s) ? 'on' : ''}`} title="喜欢" onClick={(e) => { e.stopPropagation(); menuLike(s) }}>♥</button>
                     </span>
                   </div>
                 ))}
@@ -263,7 +274,7 @@ export function SearchPage(): JSX.Element {
           <div className="song-menu__sep" />
           <button className="song-menu__item" onClick={() => { setMenu(null); onRowDouble(menu.song) }}>▶ 播放</button>
           <button className="song-menu__item" onClick={() => menuLike(menu.song)}>
-            {isLiked(menu.song.name) ? '♥ 取消喜欢' : '♥ 喜欢'}
+            {isLiked(menu.song) ? '♥ 取消喜欢' : '♥ 喜欢'}
           </button>
           <button className="song-menu__item" onClick={() => menuDownloadSong(menu.song)}>⤓ 下载歌曲</button>
           <button className="song-menu__item" onClick={() => menuDownloadLyric(menu.song)}>⤓ 下载歌词</button>
