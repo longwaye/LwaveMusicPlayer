@@ -2,7 +2,7 @@
  * 应用根组件：布局与页面路由
  */
 import { AppProvider, useApp } from './context/AppContext'
-import { Sidebar, MobileNav } from './components'
+import { Sidebar, MobileNav, BottomPlayer } from './components'
 import {
   HomePage,
   SearchPage,
@@ -32,7 +32,11 @@ function Shell(): JSX.Element {
   return (
     <div className={`app${themeDark ? ' theme-dark' : ''}`}>
       <Sidebar />
-      <Page />
+      {/* 非首页时显示全局底部播放条（功能与首页播放区一致） */}
+      {route !== 'home' && <BottomPlayer />}
+      <div className={route === 'home' ? '' : 'with-player'}>
+        <Page />
+      </div>
       <MobileNav />
       <div className="toast" />
     </div>

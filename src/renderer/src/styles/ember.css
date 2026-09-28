@@ -505,3 +505,24 @@ a:hover .placeholder:before,.playlist-card:hover .placeholder:before,.album-card
 .song-menu__sep{height:1px;background:var(--line);margin:4px 0}
 .song-menu__item{display:flex;align-items:center;gap:8px;width:100%;background:none;border:0;padding:8px 10px;font:12.5px var(--serif);color:inherit;text-align:left;cursor:pointer;border-radius:6px;transition:background .15s,color .15s}
 .song-menu__item:hover{background:rgba(200,97,54,.12);color:var(--accent)}
+
+/* 全局底部播放条（非首页显示） */
+.bottom-player{position:fixed;z-index:60;left:var(--sidebar);right:0;bottom:0;height:86px;display:flex;align-items:center;gap:24px;padding:0 26px;background:var(--paper2);border-top:1px solid var(--line)}
+.bottom-player .bp-song{display:flex;align-items:center;gap:12px;min-width:200px;max-width:300px}
+.bp-thumb{width:46px;height:46px;border-radius:6px;flex:none;background:linear-gradient(135deg,var(--accent),#3c2a22)}
+.bp-meta{display:flex;flex-direction:column;gap:3px;min-width:0}
+.bp-meta strong{font:500 15px var(--serif);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bp-meta span{font:12px var(--serif);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bp-center{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:2px}
+.bp-center .ember-progress{height:34px}
+.bp-center .time-row{display:flex;justify-content:space-between;padding:0 2px}
+.bottom-player .time-row{font:11px var(--serif);color:var(--muted)}
+.bp-controls{display:flex;align-items:center;gap:10px}
+.bp-btn{width:34px;height:34px;border-radius:50%;font:13px var(--serif);color:var(--muted);transition:.15s}
+.bp-btn:hover{color:var(--accent);background:rgba(184,92,53,.1)}
+.bp-btn.like.on{color:var(--accent)}
+.bp-play{width:44px;height:44px;font-size:15px}
+.bottom-player .volume-control{display:flex;align-items:center;gap:8px}
+.bottom-player .volume-track{width:74px}
+/* 有底部播放条时给页面内容留出底部空间 */
+.with-player .main{padding-bottom:104px}

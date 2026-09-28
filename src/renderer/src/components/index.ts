@@ -1,4 +1,5 @@
 export { Sidebar } from './Sidebar'
 export { MobileNav } from './MobileNav'
+export { BottomPlayer } from './BottomPlayer'
 export { Placeholder } from './Placeholder'
 export * from './nav'

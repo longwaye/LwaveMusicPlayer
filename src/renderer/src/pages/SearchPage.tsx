@@ -45,7 +45,7 @@ function mapSong(it: any): CloudSong {
 }
 
 export function SearchPage(): JSX.Element {
-  const { searchQuery, navigate, play, toast, addToQueue, toggleLikeSong, setLyrics, addLocalSong, likedSongs } = useApp()
+  const { searchQuery, navigate, play, toast, addToQueue, toggleLikeSong, setLyrics, addLocalSong, likedSongs, currentSong, isPlaying, togglePlay } = useApp()
   const [hotWords, setHotWords] = useState<string[]>([])
   const [cloudSongs, setCloudSongs] = useState<CloudSong[]>([])
   const [total, setTotal] = useState(0)
@@ -244,7 +244,17 @@ export function SearchPage(): JSX.Element {
                     <span className="result-album">{s.album}</span>
                     <time className="result-time">{fmtDuration(s.duration)}</time>
                     <span className="result-actions">
-                      <button className={`result-act ${activeId === s.id ? 'on' : ''}`} title="播放" onClick={(e) => { e.stopPropagation(); onRowDouble(s) }}>▶</button>
+                      <button
+                        className={`result-act ${currentSong === s.name && isPlaying ? 'playing' : activeId === s.id ? 'on' : ''}`}
+                        title="播放/暂停"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (currentSong === s.name) togglePlay()
+                          else onRowDouble(s)
+                        }}
+                      >
+                        {currentSong === s.name && isPlaying ? '❚❚' : '▶'}
+                      </button>
                       <button className="result-act" title="加入播放列表" onClick={(e) => { e.stopPropagation(); addToQueue(s.name, s.artist); toast('已加入播放列表') }}>＋</button>
                       <button className={`result-act like ${isLiked(s) ? 'on' : ''}`} title="喜欢" onClick={(e) => { e.stopPropagation(); menuLike(s) }}>♥</button>
                     </span>
