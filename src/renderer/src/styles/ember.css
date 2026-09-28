@@ -109,7 +109,8 @@ img{max-width:100%}
 .avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(145deg,#9b8069,#342f2b)}
 .hero-main{flex:1;width:100%;max-width:920px;display:flex;flex-direction:column}
 .hero-head{flex:none;margin-top:18px}
-.lyrics-area{flex:1;min-height:70px;display:flex;align-items:center;justify-content:center}
+.lyrics-area{flex:1;min-height:0;width:100%;max-width:640px;margin:0 auto;overflow-y:auto;overflow-x:hidden;display:flex;align-items:flex-start;justify-content:center;-webkit-mask-image:linear-gradient(180deg,transparent,black 10%,black 90%,transparent);mask-image:linear-gradient(180deg,transparent,black 10%,black 90%,transparent)}
+.lyrics-area::-webkit-scrollbar{width:0;height:0}
 .lyrics-placeholder{font:12px var(--serif);letter-spacing:.2em;color:rgba(255,255,255,.42);display:flex;align-items:center;gap:16px}
 .lyrics-upload{margin-left:12px;padding:0;border:0;background:none;color:rgba(255,255,255,.82);font:12px var(--serif);letter-spacing:.12em;cursor:pointer;text-decoration:underline;text-underline-offset:4px;transition:color .2s}
 .lyrics-upload:hover{color:#fff}
@@ -324,7 +325,7 @@ img{max-width:100%}
 .local-song-remove{flex:none;width:30px;height:30px;border:1px solid var(--line);border-radius:50%;display:grid;place-items:center;color:var(--muted);font-size:16px;background:none;cursor:pointer;transition:color .2s,border-color .2s}
 .local-song-remove:hover{color:var(--accent);border-color:var(--accent)}
 .local-empty{color:var(--muted);font:13px/1.9 var(--serif)}
-.lyrics-text{color:rgba(255,255,255,.9);font:italic 15px/2 var(--serif);letter-spacing:.03em;text-align:center;max-width:640px;margin:0 auto;white-space:pre-wrap}
+.lyrics-text{width:100%;padding:16px 0;color:rgba(255,255,255,.9);font:italic 15px/2 var(--serif);letter-spacing:.03em;text-align:center;white-space:pre-wrap}
 
 .local-tag{display:inline-block;margin-left:8px;padding:1px 7px;font:9px/1 var(--sans);letter-spacing:.08em;color:var(--accent);border:1px solid var(--accent);border-radius:2px;vertical-align:2px}
 
