@@ -1,0 +1,239 @@
+/* ============================================================
+   LWAVE·Player 全局样式
+   核心原则：黑色成为"电影中的阴影"而非背景；
+   橙色只做"黑暗里的一颗火星"；高级感来自比例/留白/字体/材质/克制。
+   ============================================================ */
+
+/* ---- 设计令牌：CSS 变量（与 styles/tokens.ts 保持一致） ---- */
+:root {
+  /* 颜色（依据参考图调整为更暖的大地色系） */
+  --color-ash: #eae1cf;
+  --color-warm-white: #f7e0d1;
+  --color-ink: #24221e;
+  --color-smoke: #777168;
+  --color-stone: #9a9286;
+  --color-earth: #945a3c;
+  --color-ember-black: #151411;
+  --color-night: #1e1c18;
+  --color-deep-earth: #29231e;
+  --color-magma: #b85c25;
+  --color-fire: #e0623a;
+  --color-warm-light: #dda54f;
+
+  /* 字体 */
+  --font-display: 'Cormorant Garamond', 'Bodoni Moda', 'DM Serif Display',
+    'Libre Baskerville', Georgia, serif;
+  --font-ui: 'Inter', 'IBM Plex Sans', 'Helvetica Neue', 'PingFang SC',
+    'Microsoft YaHei', sans-serif;
+
+  /* 字距 */
+  --ls-display: 0.02em;
+  --ls-ui: 0.14em;
+
+  /* 胶片质感（克制） */
+  --film-grain: 0.028;
+  --film-vignette: 0.12;
+}
+
+/* ---- 五档温度主题 ---- */
+/* 默认 ASH 浅色主题（主视觉） */
+.theme-ash {
+  --bg: var(--color-ash);
+  --bg-surface: var(--color-warm-white);
+  --fg: var(--color-ink);
+  --fg-soft: var(--color-smoke);
+  --fg-faint: var(--color-stone);
+  --line: var(--color-earth);
+  --accent: var(--color-magma);
+  --accent-glow: var(--color-warm-light);
+  color-scheme: light;
+}
+
+.theme-dust {
+  --bg: var(--color-warm-white);
+  --bg-surface: var(--color-ash);
+  --fg: var(--color-earth);
+  --fg-soft: var(--color-smoke);
+  --fg-faint: var(--color-stone);
+  --line: var(--color-earth);
+  --accent: var(--color-magma);
+  --accent-glow: var(--color-warm-light);
+  color-scheme: light;
+}
+
+.theme-dusk {
+  --bg: var(--color-earth);
+  --bg-surface: var(--color-smoke);
+  --fg: var(--color-warm-white);
+  --fg-soft: var(--color-stone);
+  --fg-faint: var(--color-smoke);
+  --line: var(--color-warm-light);
+  --accent: var(--color-warm-light);
+  --accent-glow: var(--color-fire);
+  color-scheme: light;
+}
+
+.theme-ember {
+  --bg: var(--color-deep-earth);
+  --bg-surface: var(--color-night);
+  --fg: var(--color-ash);
+  --fg-soft: var(--color-smoke);
+  --fg-faint: var(--color-stone);
+  --line: var(--color-warm-light);
+  --accent: var(--color-magma);
+  --accent-glow: var(--color-fire);
+  color-scheme: dark;
+}
+
+.theme-black {
+  --bg: var(--color-ember-black);
+  --bg-surface: var(--color-night);
+  --fg: var(--color-ash);
+  --fg-soft: var(--color-smoke);
+  --fg-faint: var(--color-stone);
+  --line: var(--color-warm-light);
+  --accent: var(--color-fire);
+  --accent-glow: var(--color-warm-light);
+  color-scheme: dark;
+}
+
+/* ---- 基础重置 ---- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-ui);
+  font-weight: 400;
+  background: var(--bg);
+  color: var(--fg);
+  letter-spacing: var(--ls-ui);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  transition: background-color 0.9s ease, color 0.9s ease;
+  user-select: none;
+  overflow: auto;
+}
+
+/* ---- 排版 ---- */
+.display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: var(--ls-display);
+  line-height: 1.1;
+}
+
+.ui-label {
+  font-family: var(--font-ui);
+  font-weight: 500;
+  letter-spacing: var(--ls-ui);
+  text-transform: uppercase;
+  font-size: 0.8125rem;
+  color: var(--fg-soft);
+}
+
+/* 克制的前景/辅助层 */
+.fg-soft {
+  color: var(--fg-soft);
+}
+.fg-faint {
+  color: var(--fg-faint);
+}
+
+/* 焦点可见性（无障碍） */
+:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* 按钮基础：无边框、无阴影、克制 */
+button {
+  font-family: var(--font-ui);
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* ---- 电影静帧背景层 ---- */
+/* 暖调占位：无真实电影图时，用大地色渐变 + 胶片色偏模拟电影静帧氛围 */
+.cinematic-fallback {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 90% at 20% 12%, #d9a45f 0%, transparent 42%),
+    radial-gradient(100% 100% at 82% 78%, #945a3c 0%, transparent 55%),
+    linear-gradient(180deg, #857363 0%, #5a4030 100%);
+  filter: saturate(0.72) contrast(1.05) sepia(0.16);
+}
+
+.cinematic-backdrop {
+  pointer-events: none;
+}
+
+/* ---- 克制胶片质感（Vignette + 极淡颗粒） ---- */
+.film-vignette {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 62%,
+    rgba(0, 0, 0, var(--film-vignette)) 100%
+  );
+}
+
+/* 颗粒层：使用预置的轻微噪点，避免每帧随机（规范 42 节） */
+.film-grain {
+  pointer-events: none;
+  position: fixed;
+  inset: -100%;
+  z-index: 91;
+  opacity: var(--film-grain);
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="140" height="140"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"/></filter><rect width="140" height="140" filter="url(%23n)"/></svg>');
+  background-repeat: repeat;
+  animation: grain-drift 8s steps(10) infinite;
+}
+
+@keyframes grain-drift {
+  0% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(-8%, 5%);
+  }
+  40% {
+    transform: translate(6%, -7%);
+  }
+  60% {
+    transform: translate(-5%, 8%);
+  }
+  80% {
+    transform: translate(9%, -4%);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+/* ---- 减少动态：无障碍 ---- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
