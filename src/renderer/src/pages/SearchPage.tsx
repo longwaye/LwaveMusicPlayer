@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useApp } from '@renderer/context/AppContext'
 import { HeroSearchBox, SectionHead } from '@renderer/components/ui'
 import { Placeholder } from '@renderer/components/Placeholder'
@@ -13,8 +13,17 @@ interface CloudSong {
   duration: number
 }
 
+interface MenuState {
+  x: number
+  y: number
+  song: CloudSong
+}
+
 /** 每页条数：避免结果撑大窗口，采用分页 */
 const PAGE_SIZE = 10
+
+/** 模块级搜索结果缓存：切页再返回时保持上次结果，不重新请求 */
+const searchCache: Record<string, { songs: CloudSong[]; total: number }> = {}
 
 /** 毫秒时长 -> m:ss */
 const fmtDuration = (ms: number): string => {
@@ -43,6 +52,8 @@ export function SearchPage(): JSX.Element {
   const [page, setPage] = useState(0)
   const [searching, setSearching] = useState(false)
   const [activeId, setActiveId] = useState(0)
+  const [menu, setMenu] = useState<MenuState | null>(null)
+  const rowTimer = useRef<number>(0)
 
   // 热门搜索：真实热搜榜（进入页面加载一次）
   useEffect(() => {
@@ -55,13 +66,21 @@ export function SearchPage(): JSX.Element {
       .catch(() => {})
   }, [])
 
-  // 云搜索（分页：每次取 PAGE_SIZE 条，offset 随页码变化）
+  // 云搜索（分页）；命中模块级缓存则直接复用，返回页面不重新请求
   useEffect(() => {
     const q = searchQuery.trim()
     if (!q) {
       setCloudSongs([])
       setTotal(0)
       setPage(0)
+      return
+    }
+    const key = `${q}|${page}`
+    const cached = searchCache[key]
+    if (cached) {
+      setCloudSongs(cached.songs)
+      setTotal(cached.total)
+      setSearching(false)
       return
     }
     let cancel = false
@@ -71,8 +90,11 @@ export function SearchPage(): JSX.Element {
       .then((res) => {
         if (cancel) return
         const r = res as { result?: { songs?: unknown[]; songCount?: number } }
-        setCloudSongs((r.result?.songs ?? []).map(mapSong))
-        setTotal(r.result?.songCount ?? 0)
+        const songs = (r.result?.songs ?? []).map(mapSong)
+        const totalCount = r.result?.songCount ?? 0
+        searchCache[key] = { songs, total: totalCount }
+        setCloudSongs(songs)
+        setTotal(totalCount)
         setSearching(false)
       })
       .catch(() => {
@@ -86,7 +108,14 @@ export function SearchPage(): JSX.Element {
     }
   }, [searchQuery, page, toast])
 
-  // 点击云歌 -> 取播放链接并播放
+  // 点击菜单外任意处关闭右键菜单
+  useEffect(() => {
+    const close = () => setMenu(null)
+    document.addEventListener('click', close)
+    return () => document.removeEventListener('click', close)
+  }, [])
+
+  // 播放云歌（取播放链接）
   const handlePlay = async (s: CloudSong) => {
     try {
       setActiveId(s.id)
@@ -104,6 +133,23 @@ export function SearchPage(): JSX.Element {
     }
   }
 
+  // 单击延时播放、双击立即播放（避免双击触发两次）
+  const onRowClick = (s: CloudSong) => {
+    window.clearTimeout(rowTimer.current)
+    rowTimer.current = window.setTimeout(() => handlePlay(s), 240)
+  }
+  const onRowDouble = (s: CloudSong) => {
+    window.clearTimeout(rowTimer.current)
+    handlePlay(s)
+  }
+
+  const onRowContext = (e: React.MouseEvent, s: CloudSong) => {
+    e.preventDefault()
+    const w = 240
+    const h = 240
+    setMenu({ x: Math.min(e.clientX, window.innerWidth - w - 8), y: Math.min(e.clientY, window.innerHeight - h - 8), song: s })
+  }
+
   const handleHot = (word: string) => {
     setPage(0)
     navigate('search', word)
@@ -111,6 +157,25 @@ export function SearchPage(): JSX.Element {
 
   const isLiked = (name: string) => likedSongs.some((l) => l.name === name)
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
+
+  const menuLike = (s: CloudSong) => {
+    toggleLikeSong(s.name, s.artist)
+    toast(isLiked(s.name) ? '已取消收藏' : '已收藏')
+    setMenu(null)
+  }
+  const menuDownloadSong = async (s: CloudSong) => {
+    setMenu(null)
+    toast('开始下载歌曲…')
+    const res = (await window.api.netease.downloadSong(s.id, s.name)) as { ok?: boolean; path?: string }
+    if (res?.ok) toast(`已下载：${s.name}`)
+    else toast('下载失败（可能需登录 VIP）')
+  }
+  const menuDownloadLyric = async (s: CloudSong) => {
+    setMenu(null)
+    const res = (await window.api.netease.downloadLyric(s.id, s.name)) as { ok?: boolean }
+    if (res?.ok) toast('歌词已下载')
+    else toast('未找到歌词可下载')
+  }
 
   return (
     <main className="main">
@@ -149,9 +214,15 @@ export function SearchPage(): JSX.Element {
           ) : (
             <>
               <div className="search-results">
-                {cloudSongs.map((s) => (
-                  <div className="result-row" key={s.id} onClick={() => handlePlay(s)}>
-                    <span className="result-idx">{String(page * PAGE_SIZE + cloudSongs.indexOf(s) + 1).padStart(2, '0')}</span>
+                {cloudSongs.map((s, idx) => (
+                  <div
+                    className="result-row"
+                    key={s.id}
+                    onClick={() => onRowClick(s)}
+                    onDoubleClick={() => onRowDouble(s)}
+                    onContextMenu={(e) => onRowContext(e, s)}
+                  >
+                    <span className="result-idx">{String(page * PAGE_SIZE + idx + 1).padStart(2, '0')}</span>
                     <div className="result-title">
                       {s.pic ? <img className="result-cover" src={s.pic} alt={s.name} loading="lazy" /> : <span className="result-cover result-cover--ph" />}
                       <b>{s.name}</b>
@@ -160,9 +231,9 @@ export function SearchPage(): JSX.Element {
                     <span className="result-album">{s.album}</span>
                     <time className="result-time">{fmtDuration(s.duration)}</time>
                     <span className="result-actions">
-                      <button className={`result-act ${activeId === s.id ? 'on' : ''}`} title="播放" onClick={(e) => { e.stopPropagation(); handlePlay(s) }}>▶</button>
+                      <button className={`result-act ${activeId === s.id ? 'on' : ''}`} title="播放" onClick={(e) => { e.stopPropagation(); onRowDouble(s) }}>▶</button>
                       <button className="result-act" title="加入播放列表" onClick={(e) => { e.stopPropagation(); addToQueue(s.name, s.artist); toast('已加入播放列表') }}>＋</button>
-                      <button className={`result-act like ${isLiked(s.name) ? 'on' : ''}`} title="喜欢" onClick={(e) => { e.stopPropagation(); toggleLikeSong(s.name, s.artist); toast(isLiked(s.name) ? '已取消收藏' : '已收藏') }}>♥</button>
+                      <button className={`result-act like ${isLiked(s.name) ? 'on' : ''}`} title="喜欢" onClick={(e) => { e.stopPropagation(); menuLike(s) }}>♥</button>
                     </span>
                   </div>
                 ))}
@@ -176,6 +247,28 @@ export function SearchPage(): JSX.Element {
           )}
         </div>
       </div>
+
+      {/* 歌曲右键菜单 */}
+      {menu && (
+        <div className="song-menu" style={{ left: menu.x, top: menu.y }} onClick={(e) => e.stopPropagation()}>
+          <div className="song-menu__head">
+            {menu.song.pic ? <img className="song-menu__cover" src={menu.song.pic} alt="" /> : <span className="song-menu__cover song-menu__cover--ph" />}
+            <div className="song-menu__meta">
+              <b>{menu.song.name}</b>
+              <span>{menu.song.artist}</span>
+              <span>{menu.song.album}</span>
+              <span>{fmtDuration(menu.song.duration)}</span>
+            </div>
+          </div>
+          <div className="song-menu__sep" />
+          <button className="song-menu__item" onClick={() => { setMenu(null); onRowDouble(menu.song) }}>▶ 播放</button>
+          <button className="song-menu__item" onClick={() => menuLike(menu.song)}>
+            {isLiked(menu.song.name) ? '♥ 取消喜欢' : '♥ 喜欢'}
+          </button>
+          <button className="song-menu__item" onClick={() => menuDownloadSong(menu.song)}>⤓ 下载歌曲</button>
+          <button className="song-menu__item" onClick={() => menuDownloadLyric(menu.song)}>⤓ 下载歌词</button>
+        </div>
+      )}
     </main>
   )
 }

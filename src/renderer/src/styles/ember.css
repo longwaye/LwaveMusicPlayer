@@ -493,3 +493,15 @@ a:hover .placeholder:before,.playlist-card:hover .placeholder:before,.album-card
 .ember-progress.is-dragging .ember-progress__thumb{transform:translate(-50%,-50%) scale(1.18);background:var(--accent)}
 @keyframes ember-breathe{0%{box-shadow:0 0 0 1px rgba(184,92,53,.10),0 0 8px rgba(184,92,53,.22),0 0 18px rgba(184,92,53,.08)}50%{box-shadow:0 0 0 1px rgba(184,92,53,.16),0 0 14px rgba(184,92,53,.36),0 0 30px rgba(184,92,53,.14)}100%{box-shadow:0 0 0 1px rgba(184,92,53,.10),0 0 8px rgba(184,92,53,.22),0 0 18px rgba(184,92,53,.08)}}
 @keyframes ember-wave-drift{0%,100%{transform:translateY(0)}50%{transform:translateY(.5px)}}
+
+/* 歌曲右键菜单 */
+.song-menu{position:fixed;z-index:300;width:244px;background:var(--paper2);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 32px rgba(0,0,0,.2);padding:8px;font-family:var(--sans)}
+.song-menu__head{display:flex;gap:12px;align-items:center;padding:6px 6px 10px}
+.song-menu__cover{width:52px;height:52px;border-radius:6px;object-fit:cover;flex:none}
+.song-menu__cover--ph{background:var(--line)}
+.song-menu__meta{display:flex;flex-direction:column;gap:2px;min-width:0}
+.song-menu__meta b{font:600 13px var(--serif);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.song-menu__meta span{font:11px var(--serif);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.song-menu__sep{height:1px;background:var(--line);margin:4px 0}
+.song-menu__item{display:flex;align-items:center;gap:8px;width:100%;background:none;border:0;padding:8px 10px;font:12.5px var(--serif);color:inherit;text-align:left;cursor:pointer;border-radius:6px;transition:background .15s,color .15s}
+.song-menu__item:hover{background:rgba(200,97,54,.12);color:var(--accent)}

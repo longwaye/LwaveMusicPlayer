@@ -40,10 +40,15 @@ const api = {
     lyric: (id: number | string): Promise<unknown> => ipcRenderer.invoke('netease:lyric', id),
     search: (keywords: string, type = 1, limit = 30, offset = 0): Promise<unknown> =>
       ipcRenderer.invoke('netease:search', keywords, type, limit, offset),
+    searchHot: (): Promise<unknown> => ipcRenderer.invoke('netease:search-hot'),
     songDetail: (ids: string | number | (string | number)[]): Promise<unknown> =>
       ipcRenderer.invoke('netease:song-detail', ids),
     songUrl: (id: number | string, level?: string): Promise<unknown> =>
-      ipcRenderer.invoke('netease:song-url', id, level)
+      ipcRenderer.invoke('netease:song-url', id, level),
+    downloadSong: (id: number | string, name: string): Promise<unknown> =>
+      ipcRenderer.invoke('netease:download-song', id, name),
+    downloadLyric: (id: number | string, name: string): Promise<unknown> =>
+      ipcRenderer.invoke('netease:download-lyric', id, name)
   }
 }
 

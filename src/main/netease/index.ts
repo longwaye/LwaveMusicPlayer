@@ -13,6 +13,7 @@ import { ipcMain } from 'electron'
 import { getLyric } from './lyric'
 import { search, searchHot } from './search'
 import { getSongDetail, getSongUrl } from './song'
+import { downloadSong, downloadLyric } from './download'
 
 export function registerNeteaseHandlers(): void {
   ipcMain.handle('netease:lyric', (_e, id: number | string) => getLyric(id))
@@ -24,4 +25,6 @@ export function registerNeteaseHandlers(): void {
   )
   ipcMain.handle('netease:song-detail', (_e, ids: string | number | (string | number)[]) => getSongDetail(ids))
   ipcMain.handle('netease:song-url', (_e, id: number | string, level?: string) => getSongUrl(id, level))
+  ipcMain.handle('netease:download-song', (_e, id: number | string, name: string) => downloadSong(id, name))
+  ipcMain.handle('netease:download-lyric', (_e, id: number | string, name: string) => downloadLyric(id, name))
 }
