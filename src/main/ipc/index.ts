@@ -125,6 +125,33 @@ const channels = {
       console.error('[music:choose-lyrics] 读取失败', err)
     }
     return { canceled: false, name: basename(p), content }
+  },
+
+  // 读取音频文件内嵌封面图，返回 data URI
+  'music:get-cover': (path: string): Promise<{ cover: string }> => {
+    return new Promise((resolve) => {
+      try {
+        new JsMediaTags.Reader(path).read({
+          onSuccess: (tag) => {
+            const pics = tag.tags.picture
+            if (pics && pics.length) {
+              const p = pics[0]
+              try {
+                const b64 = Buffer.from(p.data as unknown as Uint8Array).toString('base64')
+                resolve({ cover: `data:${p.format};base64,${b64}` })
+              } catch {
+                resolve({ cover: '' })
+              }
+            } else {
+              resolve({ cover: '' })
+            }
+          },
+          onError: () => resolve({ cover: '' })
+        })
+      } catch {
+        resolve({ cover: '' })
+      }
+    })
   }
 } as const
 
