@@ -7,7 +7,7 @@ import { PageHeader, SectionHead } from '@renderer/components/ui'
 import { songs } from '@renderer/data/ember'
 
 export function LibraryPage(): JSX.Element {
-  const { play, toast, localSongs, importLocalFiles } = useApp()
+  const { play, toast, localSongs, importLocalFiles, removeLocalSong } = useApp()
 
   return (
     <main className="main">
@@ -22,26 +22,25 @@ export function LibraryPage(): JSX.Element {
           <SectionHead title="全部歌曲" linkLabel="＋ 手动导入" onLink={() => importLocalFiles()} />
 
           <div className="local-song-list">
-            {/* 本地导入的歌曲：真实播放本地文件 */}
+            {/* 本地导入的歌曲：真实播放本地文件，可删除记录 */}
             {localSongs.map((s) => (
-              <button
-                key={'loc-' + s.path}
-                className="local-song-row"
-                onClick={() => { play(s.name, s.path); toast('正在播放 · ' + s.name) }}
-              >
-                <span className="local-song-play">▶</span>
-                <div className="local-song-meta">
-                  <b>{s.name} <em className="local-tag">本地</em></b>
-                  <small>{s.path}</small>
-                </div>
-              </button>
+              <div key={'loc-' + s.path} className="local-song-row">
+                <button className="local-song-play" onClick={() => { play(s.name, s.path); toast('正在播放 · ' + s.name) }}>▶</button>
+                <button className="local-song-body" onClick={() => { play(s.name, s.path); toast('正在播放 · ' + s.name) }}>
+                  <div className="local-song-meta">
+                    <b>{s.name} <em className="local-tag">本地</em></b>
+                    <small>{s.path}</small>
+                  </div>
+                </button>
+                <button className="local-song-remove" title="从本地音乐删除" onClick={() => { removeLocalSong(s.path); toast('已删除 ' + s.name) }}>×</button>
+              </div>
             ))}
             {/* 内置曲库歌曲 */}
             {songs.map((s) => (
               <button
                 key={'lib-' + s.name}
                 className="local-song-row"
-                onClick={() => { play(s.name); toast('正在播放 · ' + s.name) }}
+                onClick={() => { play(s.name, undefined, s.artist); toast('正在播放 · ' + s.name) }}
               >
                 <span className="local-song-play">▶</span>
                 <div className="local-song-meta">

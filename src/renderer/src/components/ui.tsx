@@ -84,7 +84,7 @@ export function SongTable({
 
   const onAction = (song: Song) => {
     if (action === 'play') {
-      play(song.name)
+      play(song.name, undefined, song.artist)
       toast('正在播放 · ' + song.name)
     } else {
       toggleLike()

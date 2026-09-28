@@ -16,7 +16,7 @@ export function AlbumPage(): JSX.Element {
             <div className="artist">Brian Eno</div>
             <div className="meta">AMBIENT · 4 TRACKS · 48 MINUTES</div>
             <div className="album-actions">
-              <button className="btn primary" onClick={() => { play('The Big Ship'); toast('正在播放 · The Big Ship') }}>
+              <button className="btn primary" onClick={() => { play('The Big Ship', undefined, 'Brian Eno'); toast('正在播放 · The Big Ship') }}>
                 PLAY ALBUM →
               </button>
               <button className="btn" onClick={() => toast('已收藏')}>♡ SAVE</button>

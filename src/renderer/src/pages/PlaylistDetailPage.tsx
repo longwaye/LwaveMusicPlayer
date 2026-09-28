@@ -15,7 +15,7 @@ export function PlaylistDetailPage(): JSX.Element {
             <div className="artist">EMBER EDITORIAL</div>
             <div className="meta">31 MINUTES · 2026</div>
             <div className="album-actions">
-              <button className="btn primary" onClick={() => { play('The Big Ship'); toast('正在播放 · The Big Ship') }}>
+              <button className="btn primary" onClick={() => { play('The Big Ship', undefined, 'Brian Eno'); toast('正在播放 · The Big Ship') }}>
                 PLAY JOURNEY →
               </button>
               <button className="btn" onClick={() => toast('已加入播放列表')}>＋ SAVE</button>
