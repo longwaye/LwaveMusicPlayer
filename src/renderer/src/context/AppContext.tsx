@@ -18,6 +18,7 @@ export interface LocalSong {
   name: string
   path: string
   artist?: string
+  album?: string
   year?: string
   lyrics?: string
 }
@@ -289,7 +290,7 @@ export function AppProvider({ children }: { children: ReactNode }): JSX.Element 
         setLocalSongs((prev) => {
           const merged = [...prev]
           for (const s of res.songs) {
-            if (!merged.some((m) => m.path === s.path)) merged.push({ name: s.name, path: s.path, artist: s.artist, year: s.year })
+            if (!merged.some((m) => m.path === s.path)) merged.push({ name: s.name, path: s.path, artist: s.artist, album: s.album, year: s.year })
           }
           return merged
         })

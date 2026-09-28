@@ -17,6 +17,7 @@ export interface LocalSongEntry {
   name: string
   path: string
   artist?: string
+  album?: string
   year?: string
 }
 
@@ -42,8 +43,8 @@ function cleanTitle(raw: string): string {
   return raw.split(/\s*[–—-]\s*|\s*\/\s*|\s*\|\s*/)[0].trim()
 }
 
-/** 读取音频文件内嵌元数据（标题 / 艺术家 / 年份），失败时返回空 */
-function readAudioMeta(path: string): Promise<{ title?: string; artist?: string; year?: string }> {
+/** 读取音频文件内嵌元数据（标题 / 艺术家 / 专辑 / 年份），失败时返回空 */
+function readAudioMeta(path: string): Promise<{ title?: string; artist?: string; album?: string; year?: string }> {
   return new Promise((resolve) => {
     try {
       new JsMediaTags.Reader(path).read({
@@ -52,6 +53,7 @@ function readAudioMeta(path: string): Promise<{ title?: string; artist?: string;
           resolve({
             title: typeof t.title === 'string' && t.title ? t.title : undefined,
             artist: typeof t.artist === 'string' && t.artist ? t.artist : undefined,
+            album: typeof t.album === 'string' && t.album ? t.album : undefined,
             year: t.year !== undefined && t.year !== null && t.year !== '' ? String(t.year) : undefined
           })
         },
@@ -91,18 +93,20 @@ const channels = {
       if (!AUDIO_EXTS.some((x) => p.toLowerCase().endsWith(x))) continue
       let title: string | undefined
       let artist: string | undefined
+      let album: string | undefined
       let year: string | undefined
       try {
         const meta = await readAudioMeta(p)
         title = meta.title
         artist = meta.artist
+        album = meta.album
         year = meta.year
       } catch {
         // 无元数据时回退到文件名
       }
       // 标题：优先内嵌 title，否则用文件名截取标题段（去掉歌手段）
       const name = (title && title.trim()) || cleanTitle(stripExt(basename(p)))
-      songs.push({ name, path: p, artist, year })
+      songs.push({ name, path: p, artist, album, year })
     }
     return { canceled: false, songs }
   },
