@@ -10,6 +10,7 @@ export function BottomPlayer(): JSX.Element {
     currentSong,
     currentArtist,
     currentAlbum,
+    currentPath,
     isPlaying,
     togglePlay,
     play,
